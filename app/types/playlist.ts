@@ -1,10 +1,24 @@
-export type PlaylistVideo = {
+export type PlaylistVideoThumbnails = {
+  default: string | null;
+  medium: string | null;
+  high: string | null;
+};
+
+export type PlaylistVideoWire = {
   id: string;
   title: string;
   url: string;
-  thumbnailUrl: string | null;
   channelTitle: string | null;
   publishedAt: string | null;
+};
+
+export type PlaylistVideo = PlaylistVideoWire & {
+  thumbnailUrl: string | null;
+  thumbnailUrls: PlaylistVideoThumbnails;
+};
+
+export type PlaylistApiWireSuccess = {
+  videos: PlaylistVideoWire[];
 };
 
 export type YouTubePlaylist = {
@@ -22,7 +36,10 @@ export type PlaylistApiError = {
   error: string;
 };
 
-export type PlaylistApiResponse = PlaylistApiSuccess | PlaylistApiError;
+export type PlaylistApiResponse =
+  | PlaylistApiSuccess
+  | PlaylistApiWireSuccess
+  | PlaylistApiError;
 
 export type YouTubePlaylistsApiSuccess = {
   playlists: YouTubePlaylist[];

@@ -14,7 +14,12 @@ export const sampleVideos: PlaylistVideo[] = Array.from({ length: 60 }, (_, inde
   id: `video-${index + 1}`,
   title: videoTitles[index % videoTitles.length],
   url: "https://www.youtube.com",
-  thumbnailUrl: null,
   channelTitle: null,
   publishedAt: null,
+  thumbnailUrl: null,
+  thumbnailUrls: {
+    default: null,
+    medium: null,
+    high: null,
+  },
 }));

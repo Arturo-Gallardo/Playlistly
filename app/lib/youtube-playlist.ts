@@ -1,11 +1,11 @@
 import "server-only";
 
-import type { PlaylistVideo, YouTubePlaylist } from "../types/playlist";
+import type { PlaylistVideoWire, YouTubePlaylist } from "../types/playlist";
 
 const YOUTUBE_PLAYLIST_ITEMS_URL =
   "https://www.googleapis.com/youtube/v3/playlistItems";
 const YOUTUBE_PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists";
-const DEFAULT_PLAYLIST_LIMIT = 500;
+const DEFAULT_PLAYLIST_LIMIT = 4000;
 const DEFAULT_USER_PLAYLIST_LIMIT = 200;
 
 type YouTubeThumbnail = {
@@ -99,18 +99,22 @@ export async function fetchYouTubePlaylistVideos(
   const playlistId = getPlaylistId(input);
 
   if (!apiKey && !accessToken) {
-    throw new YouTubePlaylistError("Add YOUTUBE_API_KEY to your .env.local file.");
+    throw new YouTubePlaylistError(
+      "Add YOUTUBE_API_KEY to your .env.local file.",
+    );
   }
 
   if (!playlistId) {
-    throw new YouTubePlaylistError("Paste a YouTube playlist URL or playlist ID.");
+    throw new YouTubePlaylistError(
+      "Paste a YouTube playlist URL or playlist ID.",
+    );
   }
 
   // signed-in loads use oauth so private playlists can work when youtube allows it
   const credential: YouTubeCredential = accessToken
     ? { type: "accessToken", value: accessToken }
     : { type: "apiKey", value: apiKey ?? "" };
-  const videos: PlaylistVideo[] = [];
+  const videos: PlaylistVideoWire[] = [];
   let nextPageToken: string | undefined;
 
   // youtube only returns 50 items at a time, so larger playlists need paging
@@ -121,7 +125,9 @@ export async function fetchYouTubePlaylistVideos(
       pageToken: nextPageToken,
     });
 
-    videos.push(...page.items.map(toPlaylistVideo).filter(isPlaylistVideo));
+    videos.push(
+      ...page.items.map(toPlaylistVideoWire).filter(isPlaylistVideoWire),
+    );
 
     if (!page.nextPageToken) {
       break;
@@ -171,6 +177,8 @@ async function fetchPlaylistPage({
     part: "snippet",
     maxResults: "50",
     playlistId,
+    fields:
+      "nextPageToken,items(snippet(title,channelTitle,publishedAt,resourceId(videoId)))",
   });
 
   const headers = new Headers();
@@ -241,7 +249,7 @@ async function fetchUserPlaylistsPage({
   };
 }
 
-function toPlaylistVideo(item: YouTubePlaylistItem) {
+function toPlaylistVideoWire(item: YouTubePlaylistItem) {
   const snippet = item.snippet;
   const videoId = snippet?.resourceId?.videoId;
 
@@ -254,10 +262,9 @@ function toPlaylistVideo(item: YouTubePlaylistItem) {
     id: videoId,
     title: snippet.title,
     url: `https://www.youtube.com/watch?v=${videoId}`,
-    thumbnailUrl: getBestThumbnailUrl(snippet.thumbnails),
     channelTitle: snippet.channelTitle ?? null,
     publishedAt: snippet.publishedAt ?? null,
-  } satisfies PlaylistVideo;
+  } satisfies PlaylistVideoWire;
 }
 
 function toYouTubePlaylist(item: YouTubeUserPlaylistItem) {
@@ -268,12 +275,14 @@ function toYouTubePlaylist(item: YouTubeUserPlaylistItem) {
   return {
     id: item.id,
     title: item.snippet.title,
-    thumbnailUrl: getBestThumbnailUrl(item.snippet.thumbnails),
+    thumbnailUrl: getPreviewThumbnailUrl(item.snippet.thumbnails),
     itemCount: item.contentDetails?.itemCount ?? null,
   } satisfies YouTubePlaylist;
 }
 
-function isPlaylistVideo(video: PlaylistVideo | null): video is PlaylistVideo {
+function isPlaylistVideoWire(
+  video: PlaylistVideoWire | null,
+): video is PlaylistVideoWire {
   return video !== null;
 }
 
@@ -283,16 +292,13 @@ function isYouTubePlaylist(
   return playlist !== null;
 }
 
-function getBestThumbnailUrl(
-  thumbnails: YouTubeThumbnails | undefined,
-) {
-  // use the largest thumbnail youtube gives us, then fall back from there
+function getPreviewThumbnailUrl(thumbnails: YouTubeThumbnails | undefined) {
   return (
-    thumbnails?.maxres?.url ??
-    thumbnails?.standard?.url ??
     thumbnails?.high?.url ??
     thumbnails?.medium?.url ??
     thumbnails?.default?.url ??
+    thumbnails?.standard?.url ??
+    thumbnails?.maxres?.url ??
     null
   );
 }

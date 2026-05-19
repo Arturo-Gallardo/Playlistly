@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Michroma&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Saira:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -9,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Nunito", Arial, sans-serif;
-  --font-mono: "Saira", monospace;
+  --font-sans: var(--font-nunito), Arial, sans-serif;
+  --font-mono: var(--font-saira), Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,32 +30,33 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Nunito", Arial, sans-serif;
+  font-family: var(--font-nunito), Arial, sans-serif;
   margin: 0;
   overflow: hidden;
 }
 
 .font-control {
-  font-family: "Saira", Arial, sans-serif;
+  font-family: var(--font-saira), Arial, sans-serif;
 }
 
 .font-logo {
-  font-family: "Michroma", Arial, sans-serif;
+  font-family: var(--font-michroma), Arial, sans-serif;
 }
 
 .toolbar-logo {
   align-items: center;
-  background: #ca3e47;
+  background: #111111;
   border-radius: 0.5rem;
   color: white;
   display: grid;
   flex-shrink: 0;
-  font-family: "Michroma", Arial, sans-serif;
+  font-family: var(--font-michroma), Arial, sans-serif;
   font-size: 0.625rem;
   font-weight: 700;
-  height: 2.25rem;
+  height: 2.75rem;
   justify-items: center;
-  width: 2.25rem;
+  overflow: hidden;
+  width: 2.75rem;
 }
 
 .toolbar-input {
@@ -65,7 +65,7 @@ body {
   border: 0;
   border-bottom: 1px solid rgb(255 255 255 / 45%);
   color: white;
-  font-family: "Saira", Arial, sans-serif;
+  font-family: var(--font-saira), Arial, sans-serif;
   font-size: 0.875rem;
   height: 2.25rem;
   max-width: 20rem;
@@ -83,6 +83,23 @@ body {
   border-color: #ca3e47;
 }
 
+.toolbar-button-active {
+  background: #ca3e47;
+  border-color: #ca3e47;
+  color: white;
+}
+
+.playlist-request-loading-bar {
+  animation: playlist-request-loading 1.1s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(202 62 71 / 85%),
+    transparent
+  );
+  width: 45%;
+}
+
 .toolbar-pan-button {
   appearance: none;
   background: transparent;
@@ -91,7 +108,7 @@ body {
   color: rgb(255 255 255 / 30%);
   cursor: pointer;
   display: grid;
-  font-family: "Saira", Arial, sans-serif;
+  font-family: var(--font-saira), Arial, sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
   height: 2.25rem;
@@ -250,6 +267,16 @@ body {
   }
 }
 
+@keyframes playlist-request-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(230%);
+  }
+}
+
 @keyframes playlist-panel-enter {
   0% {
     opacity: 0;
@@ -269,7 +296,7 @@ body {
   border-radius: 9999px;
   color: rgb(255 255 255 / 80%);
   cursor: pointer;
-  font-family: "Saira", Arial, sans-serif;
+  font-family: var(--font-saira), Arial, sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25;

@@ -1,45 +1,96 @@
+import type { PointerEvent } from "react";
+import type {
+  CanvasTile,
+  Rect,
+  VisibleCanvasTile,
+} from "../lib/canvas-layout";
 import type { PlaylistVideo } from "../types/playlist";
-import { VideoCard } from "./VideoCard";
+import { VideoCard, type ThumbnailSize } from "./VideoCard";
 
-const TILE_WIDTH_REM = 8;
+export type HoveredVideoDetails = {
+  index: number;
+  video: PlaylistVideo;
+};
 
 type VideoGridProps = {
-  onVideoHover: (video: PlaylistVideo) => void;
+  bounds: Rect;
+  cameraZoom: number;
+  movingTileIds: Set<string>;
+  onTileDoubleClick: (
+    tile: CanvasTile,
+    source: "react-double-click",
+  ) => void;
+  onVideoHover: (details: HoveredVideoDetails) => void;
   onVideoHoverEnd: () => void;
-  videos: PlaylistVideo[];
+  onTilePointerDown: (
+    event: PointerEvent<HTMLDivElement>,
+    tile: CanvasTile,
+  ) => void;
+  selectedTileIds: Set<string>;
+  visibleTiles: VisibleCanvasTile[];
 };
 
 export function VideoGrid({
+  bounds,
+  cameraZoom,
+  movingTileIds,
+  onTileDoubleClick,
   onVideoHover,
   onVideoHoverEnd,
-  videos,
+  onTilePointerDown,
+  selectedTileIds,
+  visibleTiles,
 }: VideoGridProps) {
-  const columnCount = getBalancedColumnCount(videos.length);
+  const thumbnailSize = getThumbnailSizeForZoom(cameraZoom);
 
   return (
-    <section className="w-max">
-      <div
-        className="grid gap-2"
-        style={{
-          // the column count changes with playlist size, so this has to stay dynamic
-          gridTemplateColumns: `repeat(${columnCount}, minmax(0, ${TILE_WIDTH_REM}rem))`,
-        }}
-      >
-        {videos.map((video, index) => (
+    <section
+      className="relative"
+      style={{
+        height: Math.max(1, bounds.y + bounds.height),
+        width: Math.max(1, bounds.x + bounds.width),
+      }}
+    >
+      {visibleTiles.map((tile) => (
+        <div
+          className="absolute"
+          key={tile.id}
+          style={{
+            height: tile.height,
+            left: tile.x,
+            top: tile.y,
+            width: tile.width,
+          }}
+        >
           <VideoCard
-            index={index}
-            key={video.id}
-            onHover={onVideoHover}
+            index={tile.index}
+            isMoving={movingTileIds.has(tile.id)}
+            isSelected={selectedTileIds.has(tile.id)}
+            onDoubleClick={() => onTileDoubleClick(tile, "react-double-click")}
+            onHover={(video) => onVideoHover({ index: tile.index, video })}
             onHoverEnd={onVideoHoverEnd}
-            video={video}
+            onPointerDown={(event) => onTilePointerDown(event, tile)}
+            thumbnailSize={thumbnailSize}
+            video={tile.video}
           />
-        ))}
-      </div>
+        </div>
+      ))}
     </section>
   );
 }
 
-function getBalancedColumnCount(videoCount: number) {
-  // balance the number of tiles per side so playlists do not stack vertically
-  return Math.max(1, Math.ceil(Math.sqrt(videoCount)));
+function getThumbnailSizeForZoom(zoom: number): ThumbnailSize {
+  if (zoom < 0.4) {
+    return "16px";
+  }
+
+  if (zoom < 0.5) {
+    return "32px";
+  }
+
+  if (zoom < 0.8) {
+    return "64px";
+  }
+
+  return "132px";
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { signOut } from "next-auth/react";
 
 type AccountMenuProps = {
@@ -20,11 +19,11 @@ export function AccountMenu({ email, imageUrl, name }: AccountMenuProps) {
         type="button"
       >
         {imageUrl ? (
-          <Image
+          <img
             alt=""
-            className="object-cover"
-            fill
-            sizes="36px"
+            className="size-full object-cover"
+            decoding="async"
+            referrerPolicy="no-referrer"
             src={imageUrl}
           />
         ) : (
@@ -32,8 +31,9 @@ export function AccountMenu({ email, imageUrl, name }: AccountMenuProps) {
         )}
       </button>
 
-      {/* the top padding makes a small hover bridge under the avatar */}
-      <div className="invisible absolute right-0 top-full w-56 translate-y-1 pt-2 opacity-0 transition group-hover/account:visible group-hover/account:translate-y-0 group-hover/account:opacity-100 group-focus-within/account:visible group-focus-within/account:translate-y-0 group-focus-within/account:opacity-100">
+      <div
+        className="invisible absolute right-0 top-full w-56 translate-y-1 pt-2 opacity-0 transition group-hover/account:visible group-hover/account:translate-y-0 group-hover/account:opacity-100 group-focus-within/account:visible group-focus-within/account:translate-y-0 group-focus-within/account:opacity-100"
+      >
         <div className="rounded-md border border-white/15 bg-[#111111]/90 p-3 shadow-2xl backdrop-blur">
           <div className="mb-3 min-w-0">
             {name ? (

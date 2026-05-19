@@ -10,14 +10,18 @@ import { PlaylistInput } from "./PlaylistInput";
 import { PlaylistPicker } from "./PlaylistPicker";
 
 type AppToolbarProps = {
+  areVideoDetailsHidden: boolean;
   errorMessage: string | null;
   onPlaylistLoad: (playlist: string) => Promise<void>;
+  onVideoDetailsToggle: () => void;
   playlistStatus: PlaylistLoadStatus;
 };
 
 export function AppToolbar({
+  areVideoDetailsHidden,
   errorMessage,
   onPlaylistLoad,
+  onVideoDetailsToggle,
   playlistStatus,
 }: AppToolbarProps) {
   const { data: session, status: authStatus } = useSession();
@@ -54,26 +58,48 @@ export function AppToolbar({
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-start gap-4 p-5">
       <PlaylistInput
+        areVideoDetailsHidden={areVideoDetailsHidden}
         errorMessage={errorMessage}
         onLoad={onPlaylistLoad}
+        onVideoDetailsToggle={onVideoDetailsToggle}
         status={playlistStatus}
       />
 
-      <nav className="group pointer-events-auto -m-5 hidden items-center gap-3 p-5 sm:flex">
+      {isPickerOpen ? (
         <button
-          aria-label="pick a youtube playlist"
-          className={`toolbar-pan-button playlist-picker-button ${
-            isPickerOpen ? "playlist-picker-button-active" : ""
-          }`}
-          onClick={() => void handlePickerToggle()}
+          aria-label="close playlist picker"
+          className="pointer-events-auto fixed inset-0 z-10 cursor-default bg-transparent"
+          onPointerDown={() => setIsPickerOpen(false)}
           type="button"
-        >
-          P
-        </button>
-        <button className="toolbar-pan-button">U</button>
-        <button className="toolbar-pan-button">D</button>
-        <button className="toolbar-pan-button">R</button>
-      </nav>
+        />
+      ) : null}
+
+      <div className="relative z-20">
+        <nav className="group pointer-events-auto -m-5 hidden items-center gap-3 p-5 sm:flex">
+          <button
+            aria-label="pick a youtube playlist"
+            className={`toolbar-pan-button playlist-picker-button ${
+              isPickerOpen ? "playlist-picker-button-active" : ""
+            }`}
+            onClick={() => void handlePickerToggle()}
+            type="button"
+          >
+            P
+          </button>
+          <button className="toolbar-pan-button">U</button>
+          <button className="toolbar-pan-button">D</button>
+          <button className="toolbar-pan-button">R</button>
+        </nav>
+
+        <PlaylistPicker
+          errorMessage={playlistsErrorMessage}
+          isOpen={isPickerOpen}
+          onRefresh={loadPlaylists}
+          onSelect={handlePlaylistSelect}
+          playlists={playlists}
+          status={playlistsStatus}
+        />
+      </div>
 
       <div className="pointer-events-auto flex justify-end gap-2">
         {isSignedIn ? (
@@ -100,14 +126,6 @@ export function AppToolbar({
         </button>
       </div>
 
-      <PlaylistPicker
-        errorMessage={playlistsErrorMessage}
-        isOpen={isPickerOpen}
-        onRefresh={loadPlaylists}
-        onSelect={handlePlaylistSelect}
-        playlists={playlists}
-        status={playlistsStatus}
-      />
     </header>
   );
 }
