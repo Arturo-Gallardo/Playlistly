@@ -32,6 +32,8 @@ export const canvasTileConfig = {
   gap: 8,
 };
 
+export const tileSnapThreshold = 12;
+
 const viewportTileBuffer = 360;
 
 export function getCanvasCellStride() {
@@ -41,7 +43,51 @@ export function getCanvasCellStride() {
   };
 }
 
-export function createCanvasTiles(videos: PlaylistVideo[]) {
+export function createBatchTileId(batchId: string, videoId: string) {
+  return `${batchId}:${videoId}`;
+}
+
+export function resolvePastedTileId(
+  occupiedTileIds: ReadonlySet<string>,
+  batchId: string,
+  videoId: string,
+  entryIndex: number,
+) {
+  const primaryId = createBatchTileId(batchId, videoId);
+
+  if (!occupiedTileIds.has(primaryId)) {
+    return primaryId;
+  }
+
+  const indexedId = createBatchTileId(batchId, `${videoId}~${entryIndex}`);
+
+  if (!occupiedTileIds.has(indexedId)) {
+    return indexedId;
+  }
+
+  let suffix = 2;
+
+  while (suffix < 1000) {
+    const candidate = createBatchTileId(
+      batchId,
+      `${videoId}~${entryIndex}~${suffix}`,
+    );
+
+    if (!occupiedTileIds.has(candidate)) {
+      return candidate;
+    }
+
+    suffix += 1;
+  }
+
+  return createBatchTileId(batchId, `${videoId}~${crypto.randomUUID()}`);
+}
+
+export function createCanvasTilesWithIds(
+  videos: PlaylistVideo[],
+  getTileId: (video: PlaylistVideo) => string,
+  origin: Point,
+) {
   const columnCount = getBalancedColumnCount(videos.length);
   const cellStride = getCanvasCellStride();
 
@@ -50,14 +96,30 @@ export function createCanvasTiles(videos: PlaylistVideo[]) {
     const row = Math.floor(index / columnCount);
 
     return {
-      id: video.id,
+      id: getTileId(video),
       video,
-      x: column * cellStride.width,
-      y: row * cellStride.height,
+      x: origin.x + column * cellStride.width,
+      y: origin.y + row * cellStride.height,
       width: canvasTileConfig.width,
       height: canvasTileConfig.height,
     } satisfies CanvasTile;
   });
+}
+
+export function getAppendOrigin(existingBounds: Rect, newBatchBounds: Rect): Point {
+  const hasExistingTiles =
+    existingBounds.width > 1 || existingBounds.height > 1;
+
+  if (!hasExistingTiles) {
+    return { x: 0, y: 0 };
+  }
+
+  const batchGap = canvasTileConfig.gap * 4;
+
+  return {
+    x: existingBounds.x + existingBounds.width + batchGap,
+    y: existingBounds.y,
+  };
 }
 
 export function getGridCanvasBounds(tileCount: number): Rect {
@@ -162,13 +224,11 @@ export function getVisibleWorldRect({
 export function getVisibleCanvasTiles({
   tiles,
   visibleRect,
-  columnCount,
   cameraZoom = 1,
   movedTileIds = new Set<string>(),
 }: {
   tiles: CanvasTile[];
   visibleRect: Rect;
-  columnCount: number;
   cameraZoom?: number;
   movedTileIds?: ReadonlySet<string>;
 }) {
@@ -180,11 +240,9 @@ export function getVisibleCanvasTiles({
     0,
     Math.floor(visibleRect.x / cellStride.width) - gridPadding,
   );
-  const columnEnd = Math.min(
-    columnCount - 1,
+  const columnEnd =
     Math.ceil((visibleRect.x + visibleRect.width) / cellStride.width) +
-      gridPadding,
-  );
+    gridPadding;
   const rowStart = Math.max(
     0,
     Math.floor(visibleRect.y / cellStride.height) - gridPadding,
@@ -195,8 +253,8 @@ export function getVisibleCanvasTiles({
 
   for (let index = 0; index < tiles.length; index += 1) {
     const tile = tiles[index];
-    const column = index % columnCount;
-    const row = Math.floor(index / columnCount);
+    const column = Math.floor(tile.x / cellStride.width);
+    const row = Math.floor(tile.y / cellStride.height);
     const isInGridWindow =
       column >= columnStart &&
       column <= columnEnd &&
@@ -216,6 +274,164 @@ export function getVisibleCanvasTiles({
   }
 
   return visibleTiles;
+}
+
+type SnapCandidate = {
+  delta: number;
+  distance: number;
+  priority: number;
+};
+
+export function getProposedTilesBoundingRect(
+  tiles: CanvasTile[],
+  tileIds: Set<string>,
+  worldPoint: Point,
+  grabOffsets: Map<string, Point>,
+): Rect {
+  const proposedRects: Rect[] = [];
+
+  for (const tile of tiles) {
+    if (!tileIds.has(tile.id)) {
+      continue;
+    }
+
+    const grabOffset = grabOffsets.get(tile.id);
+
+    if (!grabOffset) {
+      continue;
+    }
+
+    proposedRects.push({
+      x: worldPoint.x - grabOffset.x,
+      y: worldPoint.y - grabOffset.y,
+      width: tile.width,
+      height: tile.height,
+    });
+  }
+
+  return getRectBounds(proposedRects);
+}
+
+export function getSnapDelta({
+  movingBounds,
+  staticTiles,
+  gap = canvasTileConfig.gap,
+  threshold = tileSnapThreshold,
+}: {
+  movingBounds: Rect;
+  staticTiles: Rect[];
+  gap?: number;
+  threshold?: number;
+}): Point {
+  const movingLeft = movingBounds.x;
+  const movingRight = movingBounds.x + movingBounds.width;
+  const movingTop = movingBounds.y;
+  const movingBottom = movingBounds.y + movingBounds.height;
+  const horizontalCandidates: SnapCandidate[] = [];
+  const verticalCandidates: SnapCandidate[] = [];
+
+  for (const staticTile of staticTiles) {
+    const staticLeft = staticTile.x;
+    const staticRight = staticTile.x + staticTile.width;
+    const staticTop = staticTile.y;
+    const staticBottom = staticTile.y + staticTile.height;
+
+    horizontalCandidates.push(
+      {
+        delta: staticRight + gap - movingLeft,
+        distance: Math.abs(staticRight + gap - movingLeft),
+        priority: 0,
+      },
+      {
+        delta: staticLeft - gap - movingRight,
+        distance: Math.abs(staticLeft - gap - movingRight),
+        priority: 0,
+      },
+      {
+        delta: staticLeft - movingLeft,
+        distance: Math.abs(staticLeft - movingLeft),
+        priority: 1,
+      },
+      {
+        delta: staticRight - movingRight,
+        distance: Math.abs(staticRight - movingRight),
+        priority: 1,
+      },
+    );
+
+    verticalCandidates.push(
+      {
+        delta: staticBottom + gap - movingTop,
+        distance: Math.abs(staticBottom + gap - movingTop),
+        priority: 0,
+      },
+      {
+        delta: staticTop - gap - movingBottom,
+        distance: Math.abs(staticTop - gap - movingBottom),
+        priority: 0,
+      },
+      {
+        delta: staticTop - movingTop,
+        distance: Math.abs(staticTop - movingTop),
+        priority: 1,
+      },
+      {
+        delta: staticBottom - movingBottom,
+        distance: Math.abs(staticBottom - movingBottom),
+        priority: 1,
+      },
+    );
+  }
+
+  return {
+    x: pickBestSnapDelta(horizontalCandidates, threshold),
+    y: pickBestSnapDelta(verticalCandidates, threshold),
+  };
+}
+
+export function applyTileSnap(
+  worldPoint: Point,
+  tileIds: Set<string>,
+  grabOffsets: Map<string, Point>,
+  tiles: CanvasTile[],
+): Point {
+  const movingBounds = getProposedTilesBoundingRect(
+    tiles,
+    tileIds,
+    worldPoint,
+    grabOffsets,
+  );
+  const staticTiles = tiles.filter((tile) => !tileIds.has(tile.id));
+  const snapDelta = getSnapDelta({
+    movingBounds,
+    staticTiles,
+  });
+
+  return {
+    x: worldPoint.x + snapDelta.x,
+    y: worldPoint.y + snapDelta.y,
+  };
+}
+
+function pickBestSnapDelta(candidates: SnapCandidate[], threshold: number) {
+  let bestCandidate: SnapCandidate | null = null;
+
+  for (const candidate of candidates) {
+    if (candidate.distance > threshold) {
+      continue;
+    }
+
+    if (
+      !bestCandidate ||
+      candidate.distance < bestCandidate.distance ||
+      (candidate.distance === bestCandidate.distance &&
+        candidate.priority < bestCandidate.priority)
+    ) {
+      bestCandidate = candidate;
+    }
+  }
+
+  return bestCandidate?.delta ?? 0;
 }
 
 export function buildGrabOffsets(
@@ -242,17 +458,6 @@ export function buildGrabOffsets(
 export function getBalancedColumnCount(videoCount: number) {
   // balance the number of tiles per side so playlists do not stack vertically
   return Math.max(1, Math.ceil(Math.sqrt(videoCount)));
-}
-
-export function moveRect<TileRect extends Rect>(
-  rect: TileRect,
-  delta: Point,
-): TileRect {
-  return {
-    ...rect,
-    x: rect.x + delta.x,
-    y: rect.y + delta.y,
-  } satisfies TileRect;
 }
 
 export function normalizeRect(start: Point, current: Point): Rect {

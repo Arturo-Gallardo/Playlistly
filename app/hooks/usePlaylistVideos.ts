@@ -22,14 +22,12 @@ type PlaylistVideoCacheEntry = {
   videos: PlaylistVideoWire[];
 };
 
-export function usePlaylistVideos(initialVideos: PlaylistVideo[]) {
+export function usePlaylistVideos() {
   const requestIdRef = useRef(0);
-  const [videos, setVideos] = useState(initialVideos);
   const [status, setStatus] = useState<PlaylistLoadStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function loadPlaylist(playlist: string) {
-    // this handles both pasted urls and playlist ids from the picker
+  async function fetchPlaylist(playlist: string): Promise<PlaylistVideo[] | null> {
     const requestId = requestIdRef.current + 1;
     const cachedVideos = getCachedPlaylistVideos(playlist);
 
@@ -38,10 +36,9 @@ export function usePlaylistVideos(initialVideos: PlaylistVideo[]) {
     setErrorMessage(null);
 
     if (cachedVideos) {
-      setVideos(cachedVideos);
       setStatus("ready");
       void refreshPlaylistVideos(playlist, requestId, false);
-      return true;
+      return cachedVideos;
     }
 
     return refreshPlaylistVideos(playlist, requestId, true);
@@ -51,7 +48,7 @@ export function usePlaylistVideos(initialVideos: PlaylistVideo[]) {
     playlist: string,
     requestId: number,
     shouldShowErrors: boolean,
-  ) {
+  ): Promise<PlaylistVideo[] | null> {
     try {
       const response = await fetch(
         `/api/youtube-playlist?playlist=${encodeURIComponent(playlist)}`,
@@ -65,31 +62,29 @@ export function usePlaylistVideos(initialVideos: PlaylistVideo[]) {
             "error" in data ? data.error : "Could not load that playlist.",
           );
         }
-        return false;
+        return null;
       }
 
       setCachedPlaylistVideos(playlist, data.videos);
 
       if (requestIdRef.current === requestId) {
-        setVideos(data.videos);
         setStatus("ready");
       }
 
-      return true;
+      return data.videos;
     } catch {
       if (shouldShowErrors && requestIdRef.current === requestId) {
         setStatus("error");
         setErrorMessage("Could not reach the playlist API.");
       }
-      return false;
+      return null;
     }
   }
 
   return {
     errorMessage,
-    loadPlaylist,
+    fetchPlaylist,
     status,
-    videos,
   };
 }
 
@@ -184,7 +179,6 @@ function readLegacyPlaylistVideoCache(value: unknown) {
 function toPlaylistApiResponse(
   data: unknown,
 ): PlaylistApiSuccess | PlaylistApiError {
-  // fetch gives unknown json, so keep the client state strict before using it
   if (isRecord(data) && typeof data.error === "string") {
     return { error: data.error };
   }

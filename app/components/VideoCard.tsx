@@ -1,4 +1,4 @@
-import type { PointerEvent } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 import { memo, useState } from "react";
 import { getYouTubeVideoThumbnails } from "../lib/youtube-thumbnails";
 import type { PlaylistVideo } from "../types/playlist";
@@ -12,6 +12,7 @@ type VideoCardProps = {
   onDoubleClick: () => void;
   onHover: (video: PlaylistVideo) => void;
   onHoverEnd: () => void;
+  onContextMenu: (event: MouseEvent<HTMLDivElement>) => void;
   onPointerDown: (event: PointerEvent<HTMLDivElement>) => void;
   thumbnailSize: ThumbnailSize;
   video: PlaylistVideo;
@@ -21,6 +22,7 @@ export const VideoCard = memo(function VideoCard({
   index,
   isMoving,
   isSelected,
+  onContextMenu,
   onDoubleClick,
   onHover,
   onHoverEnd,
@@ -47,6 +49,7 @@ export const VideoCard = memo(function VideoCard({
       onFocus={() => onHover(video)}
       onMouseEnter={() => onHover(video)}
       onMouseLeave={onHoverEnd}
+      onContextMenu={onContextMenu}
       onDoubleClick={onDoubleClick}
       onPointerDown={onPointerDown}
       role="group"

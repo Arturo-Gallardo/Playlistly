@@ -8,10 +8,19 @@ import { useYouTubePlaylists } from "../hooks/useYouTubePlaylists";
 import { AccountMenu } from "./AccountMenu";
 import { PlaylistInput } from "./PlaylistInput";
 import { PlaylistPicker } from "./PlaylistPicker";
+import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
 
 type AppToolbarProps = {
   areVideoDetailsHidden: boolean;
+  canRedo: boolean;
+  canSave: boolean;
+  canUndo: boolean;
   errorMessage: string | null;
+  hasTilesOnCanvas: boolean;
+  onCanvasClear: () => void;
+  onCanvasRedo: () => void;
+  onCanvasSave: () => void;
+  onCanvasUndo: () => void;
   onPlaylistLoad: (playlist: string) => Promise<void>;
   onVideoDetailsToggle: () => void;
   playlistStatus: PlaylistLoadStatus;
@@ -19,7 +28,15 @@ type AppToolbarProps = {
 
 export function AppToolbar({
   areVideoDetailsHidden,
+  canRedo,
+  canSave,
+  canUndo,
   errorMessage,
+  hasTilesOnCanvas,
+  onCanvasClear,
+  onCanvasRedo,
+  onCanvasSave,
+  onCanvasUndo,
   onPlaylistLoad,
   onVideoDetailsToggle,
   playlistStatus,
@@ -56,10 +73,11 @@ export function AppToolbar({
   }
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-start gap-4 p-5">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-start gap-4 overflow-visible p-5">
       <PlaylistInput
         areVideoDetailsHidden={areVideoDetailsHidden}
         errorMessage={errorMessage}
+        hasTilesOnCanvas={hasTilesOnCanvas}
         onLoad={onPlaylistLoad}
         onVideoDetailsToggle={onVideoDetailsToggle}
         status={playlistStatus}
@@ -76,19 +94,67 @@ export function AppToolbar({
 
       <div className="relative z-20">
         <nav className="group pointer-events-auto -m-5 hidden items-center gap-3 p-5 sm:flex">
-          <button
-            aria-label="pick a youtube playlist"
-            className={`toolbar-pan-button playlist-picker-button ${
-              isPickerOpen ? "playlist-picker-button-active" : ""
-            }`}
-            onClick={() => void handlePickerToggle()}
-            type="button"
+          <ToolbarTooltipWrap
+            hint={isSignedIn ? undefined : "Sign in first"}
+            label={isSignedIn ? "Pick playlist" : "Log in to pick"}
           >
-            P
-          </button>
-          <button className="toolbar-pan-button">U</button>
-          <button className="toolbar-pan-button">D</button>
-          <button className="toolbar-pan-button">R</button>
+            <button
+              aria-label="pick a youtube playlist"
+              className={`toolbar-pan-button playlist-picker-button ${
+                isPickerOpen ? "playlist-picker-button-active" : ""
+              }`}
+              onClick={() => void handlePickerToggle()}
+              type="button"
+            >
+              P
+            </button>
+          </ToolbarTooltipWrap>
+          <ToolbarTooltipWrap
+            hint={canSave ? "Ctrl+S" : "Load a playlist first"}
+            label="Save layout"
+          >
+            <button
+              aria-label="save canvas layout"
+              className="toolbar-pan-button disabled:cursor-not-allowed disabled:opacity-35"
+              disabled={!canSave}
+              onClick={onCanvasSave}
+              type="button"
+            >
+              S
+            </button>
+          </ToolbarTooltipWrap>
+          <ToolbarTooltipWrap hint="Ctrl+K" label="Clear layout">
+            <button
+              aria-label="clear saved canvas layout"
+              className="toolbar-pan-button"
+              onClick={onCanvasClear}
+              type="button"
+            >
+              C
+            </button>
+          </ToolbarTooltipWrap>
+          <ToolbarTooltipWrap hint="Ctrl+Z" label="Undo">
+            <button
+              aria-label="undo tile move"
+              className="toolbar-pan-button disabled:cursor-not-allowed disabled:opacity-35"
+              disabled={!canUndo}
+              onClick={onCanvasUndo}
+              type="button"
+            >
+              U
+            </button>
+          </ToolbarTooltipWrap>
+          <ToolbarTooltipWrap hint="Ctrl+Y" label="Redo">
+            <button
+              aria-label="redo tile move"
+              className="toolbar-pan-button disabled:cursor-not-allowed disabled:opacity-35"
+              disabled={!canRedo}
+              onClick={onCanvasRedo}
+              type="button"
+            >
+              R
+            </button>
+          </ToolbarTooltipWrap>
         </nav>
 
         <PlaylistPicker
@@ -109,23 +175,26 @@ export function AppToolbar({
             name={session.user?.name ?? null}
           />
         ) : (
+          <ToolbarTooltipWrap label="Log in with Google">
+            <button
+              className="toolbar-button"
+              onClick={() => void signIn("google")}
+              type="button"
+            >
+              login
+            </button>
+          </ToolbarTooltipWrap>
+        )}
+        <ToolbarTooltipWrap label="Settings">
           <button
-            className="toolbar-button"
-            onClick={() => void signIn("google")}
+            aria-label="open settings"
+            className="toolbar-icon-button"
             type="button"
           >
-            login
+            <Settings aria-hidden="true" className="size-4" strokeWidth={1.8} />
           </button>
-        )}
-        <button
-          aria-label="open settings"
-          className="toolbar-icon-button"
-          type="button"
-        >
-          <Settings aria-hidden="true" className="size-4" strokeWidth={1.8} />
-        </button>
+        </ToolbarTooltipWrap>
       </div>
-
     </header>
   );
 }

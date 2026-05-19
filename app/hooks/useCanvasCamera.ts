@@ -108,18 +108,6 @@ export function useCanvasCamera() {
     [commitCamera],
   );
 
-  const zoomBy = useCallback(
-    (amount: number, point?: Point) => {
-      const zoomPoint = point ?? {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      };
-
-      zoomAtPoint(zoomPoint, cameraRef.current.zoom + amount);
-    },
-    [zoomAtPoint],
-  );
-
   const getLiveCamera = useCallback(() => cameraRef.current, []);
 
   return {
@@ -128,9 +116,9 @@ export function useCanvasCamera() {
     getLiveCamera,
     panBy,
     resetCamera,
+    restoreCamera: commitCamera,
     syncCamera,
     worldLayerRef,
-    zoomBy,
     zoomAtPoint,
   };
 }

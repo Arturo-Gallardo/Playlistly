@@ -2,6 +2,7 @@ import {
   getYouTubePreviewThumbnailUrl,
   getYouTubeVideoThumbnails,
 } from "./youtube-thumbnails";
+import type { CanvasVideoWire } from "../types/canvas-snapshot";
 import type { PlaylistVideo, PlaylistVideoWire } from "../types/playlist";
 
 export function hydratePlaylistVideo(wire: PlaylistVideoWire): PlaylistVideo {
@@ -24,6 +25,14 @@ export function hydratePlaylistVideos(
   return wires.map(hydratePlaylistVideo);
 }
 
+export function hydrateCanvasVideo(wire: CanvasVideoWire): PlaylistVideo {
+  return hydratePlaylistVideo(wire);
+}
+
+export function hydrateCanvasVideos(wires: CanvasVideoWire[]): PlaylistVideo[] {
+  return wires.map(hydrateCanvasVideo);
+}
+
 export function toPlaylistVideoWire(video: PlaylistVideo): PlaylistVideoWire {
   return {
     id: video.id,
@@ -31,5 +40,15 @@ export function toPlaylistVideoWire(video: PlaylistVideo): PlaylistVideoWire {
     url: video.url,
     channelTitle: video.channelTitle,
     publishedAt: video.publishedAt,
+  };
+}
+
+export function toCanvasVideoWire(
+  tileId: string,
+  video: PlaylistVideo,
+): CanvasVideoWire {
+  return {
+    tileId,
+    ...toPlaylistVideoWire(video),
   };
 }

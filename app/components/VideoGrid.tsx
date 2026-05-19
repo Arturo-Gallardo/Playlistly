@@ -1,4 +1,4 @@
-import type { PointerEvent } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 import type {
   CanvasTile,
   Rect,
@@ -22,6 +22,10 @@ type VideoGridProps = {
   ) => void;
   onVideoHover: (details: HoveredVideoDetails) => void;
   onVideoHoverEnd: () => void;
+  onTileContextMenu: (
+    event: MouseEvent<HTMLDivElement>,
+    tile: CanvasTile,
+  ) => void;
   onTilePointerDown: (
     event: PointerEvent<HTMLDivElement>,
     tile: CanvasTile,
@@ -37,6 +41,7 @@ export function VideoGrid({
   onTileDoubleClick,
   onVideoHover,
   onVideoHoverEnd,
+  onTileContextMenu,
   onTilePointerDown,
   selectedTileIds,
   visibleTiles,
@@ -66,6 +71,7 @@ export function VideoGrid({
             index={tile.index}
             isMoving={movingTileIds.has(tile.id)}
             isSelected={selectedTileIds.has(tile.id)}
+            onContextMenu={(event) => onTileContextMenu(event, tile)}
             onDoubleClick={() => onTileDoubleClick(tile, "react-double-click")}
             onHover={(video) => onVideoHover({ index: tile.index, video })}
             onHoverEnd={onVideoHoverEnd}

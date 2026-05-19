@@ -2,10 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import type { PlaylistLoadStatus } from "../hooks/usePlaylistVideos";
+import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
 
 type PlaylistInputProps = {
   areVideoDetailsHidden: boolean;
   errorMessage: string | null;
+  hasTilesOnCanvas: boolean;
   onLoad: (playlist: string) => Promise<void>;
   onVideoDetailsToggle: () => void;
   status: PlaylistLoadStatus;
@@ -14,6 +16,7 @@ type PlaylistInputProps = {
 export function PlaylistInput({
   areVideoDetailsHidden,
   errorMessage,
+  hasTilesOnCanvas,
   onLoad,
   onVideoDetailsToggle,
   status,
@@ -33,7 +36,7 @@ export function PlaylistInput({
 
   return (
     <form
-      className="pointer-events-auto flex min-w-0 items-start gap-3"
+      className="pointer-events-auto flex min-w-0 items-center gap-3"
       onSubmit={handleSubmit}
     >
       <div className="toolbar-logo">
@@ -57,7 +60,11 @@ export function PlaylistInput({
           disabled={isLoading}
           id="playlist-url"
           onChange={(event) => setPlaylist(event.target.value)}
-          placeholder="Paste a youtube playlist link"
+          placeholder={
+            hasTilesOnCanvas
+              ? "Paste another playlist link"
+              : "Paste a youtube playlist link"
+          }
           type="text"
           value={playlist}
         />
@@ -68,17 +75,23 @@ export function PlaylistInput({
         ) : null}
       </div>
 
-      <button className="toolbar-button" disabled={isLoading} type="submit">
-        {isLoading ? "loading" : "load"}
-      </button>
-      <button
-        aria-pressed={!areVideoDetailsHidden}
-        className={`toolbar-button ${areVideoDetailsHidden ? "" : "toolbar-button-active"}`}
-        onClick={onVideoDetailsToggle}
-        type="button"
+      <ToolbarTooltipWrap label="Load playlist">
+        <button className="toolbar-button" disabled={isLoading} type="submit">
+          {isLoading ? "loading" : "load"}
+        </button>
+      </ToolbarTooltipWrap>
+      <ToolbarTooltipWrap
+        label={areVideoDetailsHidden ? "Show details" : "Hide details"}
       >
-        details
-      </button>
+        <button
+          aria-pressed={!areVideoDetailsHidden}
+          className={`toolbar-button ${areVideoDetailsHidden ? "" : "toolbar-button-active"}`}
+          onClick={onVideoDetailsToggle}
+          type="button"
+        >
+          details
+        </button>
+      </ToolbarTooltipWrap>
     </form>
   );
 }
