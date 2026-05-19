@@ -16,7 +16,7 @@ type Point = {
 const minZoom = 0.35;
 const maxZoom = 2.4;
 
-// this is the starting camera position inside the larger canvas.
+// this is the starting camera position inside the larger canvas
 const startCamera: Camera = {
   x: 80,
   y: 110,
@@ -24,7 +24,7 @@ const startCamera: Camera = {
 };
 
 function clampZoom(zoom: number) {
-  // keep the canvas from getting too tiny or too huge.
+  // keep the canvas from getting too tiny or too huge
   return Math.min(maxZoom, Math.max(minZoom, zoom));
 }
 
@@ -32,7 +32,7 @@ export function useCanvasCamera() {
   const [camera, setCamera] = useState<Camera>(startCamera);
 
   const panBy = useCallback((delta: Point) => {
-    // panning only moves the camera, not the video tiles.
+    // panning only moves the camera, not the video tiles
     setCamera((currentCamera) => ({
       ...currentCamera,
       x: currentCamera.x + delta.x,
@@ -49,7 +49,7 @@ export function useCanvasCamera() {
       const zoom = clampZoom(nextZoom);
       const zoomChange = zoom / currentCamera.zoom;
 
-      // keep the point under the cursor steady while zooming.
+      // keep the point under the cursor steady while zooming
       return {
         zoom,
         x: point.x - (point.x - currentCamera.x) * zoomChange,
@@ -60,7 +60,7 @@ export function useCanvasCamera() {
 
   const zoomBy = useCallback(
     (amount: number, point?: Point) => {
-      // button zooms use the middle of the screen unless a point is passed in.
+      // button zooms use the middle of the screen unless a point is passed in
       const zoomPoint = point ?? {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,

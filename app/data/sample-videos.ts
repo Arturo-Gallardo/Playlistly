@@ -1,8 +1,4 @@
-export type PlaylistVideo = {
-  id: string;
-  title: string;
-  url: string;
-};
+import type { PlaylistVideo } from "../types/playlist";
 
 const videoTitles = [
   "playlist overview",
@@ -13,9 +9,12 @@ const videoTitles = [
   "final recap",
 ];
 
-// a longer playlist makes the grid feel closer to the final app.
+// a longer playlist makes the grid feel closer to the final app
 export const sampleVideos: PlaylistVideo[] = Array.from({ length: 60 }, (_, index) => ({
   id: `video-${index + 1}`,
   title: videoTitles[index % videoTitles.length],
   url: "https://www.youtube.com",
+  thumbnailUrl: null,
+  channelTitle: null,
+  publishedAt: null,
 }));

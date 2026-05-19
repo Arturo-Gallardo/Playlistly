@@ -1,0 +1,65 @@
+"use client";
+
+import Image from "next/image";
+import { signOut } from "next-auth/react";
+
+type AccountMenuProps = {
+  email: string | null;
+  imageUrl: string | null;
+  name: string | null;
+};
+
+export function AccountMenu({ email, imageUrl, name }: AccountMenuProps) {
+  const fallbackLabel = getFallbackLabel(name, email);
+
+  return (
+    <div className="group/account relative">
+      <button
+        aria-label="open account menu"
+        className="relative grid size-9 overflow-hidden rounded-full border border-white/45 bg-white/5 text-xs font-semibold text-white transition hover:border-[#CA3E47]"
+        type="button"
+      >
+        {imageUrl ? (
+          <Image
+            alt=""
+            className="object-cover"
+            fill
+            sizes="36px"
+            src={imageUrl}
+          />
+        ) : (
+          <span className="grid size-full place-items-center">{fallbackLabel}</span>
+        )}
+      </button>
+
+      {/* the top padding makes a small hover bridge under the avatar */}
+      <div className="invisible absolute right-0 top-full w-56 translate-y-1 pt-2 opacity-0 transition group-hover/account:visible group-hover/account:translate-y-0 group-hover/account:opacity-100 group-focus-within/account:visible group-focus-within/account:translate-y-0 group-focus-within/account:opacity-100">
+        <div className="rounded-md border border-white/15 bg-[#111111]/90 p-3 shadow-2xl backdrop-blur">
+          <div className="mb-3 min-w-0">
+            {name ? (
+              <p className="font-control truncate text-xs font-semibold text-white">
+                {name}
+              </p>
+            ) : null}
+            {email ? (
+              <p className="mt-1 truncate text-[11px] text-white/55">{email}</p>
+            ) : null}
+          </div>
+
+          <button
+            className="toolbar-button w-full text-center"
+            onClick={() => void signOut()}
+            type="button"
+          >
+            logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getFallbackLabel(name: string | null, email: string | null) {
+  const labelSource = name ?? email ?? "U";
+  return labelSource.slice(0, 1).toUpperCase();
+}
