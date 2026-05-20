@@ -21,6 +21,14 @@ import { useCanvasNotifications } from "./useCanvasNotifications";
 import { useCanvasPointerInteractions } from "./useCanvasPointerInteractions";
 import { useCanvasSelection } from "./useCanvasSelection";
 import { useCanvasViewport } from "./useCanvasViewport";
+import {
+  buildOrderedTilePositions,
+  getTileOrderCriterionLabel,
+  sortTilesByArtist,
+  sortTilesByColor,
+  sortTilesByDate,
+  type TileOrderCriterion,
+} from "../../lib/canvas/tile-ordering";
 
 export function useAppCanvas() {
   const { loadNotification, showNotification } = useCanvasNotifications();
@@ -88,6 +96,7 @@ export function useAppCanvas() {
     placeTilesAtWorldPoint,
     redoTiles,
     removeTilesByIds,
+    repositionTiles,
     replaceTilesWithPaste,
     resetTileState,
     restoreTileState,
@@ -250,6 +259,67 @@ export function useAppCanvas() {
     showNotification,
     validSelectedTileIds,
   ]);
+
+  const handleOrderSelectedTiles = useCallback(
+    async (criterion: TileOrderCriterion) => {
+      if (validSelectedTileIds.size < 2) {
+        showNotification("select at least two tiles to order");
+        return;
+      }
+
+      const selectedTiles = tiles.filter((tile) =>
+        validSelectedTileIds.has(tile.id),
+      );
+
+      if (selectedTiles.length < 2) {
+        showNotification("select at least two tiles to order");
+        return;
+      }
+
+      if (criterion === "color") {
+        showNotification("ordering by color…");
+      }
+
+      let sortedTiles = selectedTiles;
+
+      try {
+        if (criterion === "color") {
+          sortedTiles = await sortTilesByColor(selectedTiles);
+        } else if (criterion === "artist") {
+          sortedTiles = sortTilesByArtist(selectedTiles);
+        } else {
+          sortedTiles = sortTilesByDate(selectedTiles);
+        }
+      } catch {
+        showNotification("could not order selected tiles");
+        return;
+      }
+
+      const positionUpdates = buildOrderedTilePositions(
+        sortedTiles,
+        selectedTiles,
+      );
+
+      beginTileDragCheckpoint();
+      repositionTiles(positionUpdates);
+      commitTileDragCheckpoint();
+      saveCanvasSilently();
+
+      const tileLabel = selectedTiles.length === 1 ? "tile" : "tiles";
+      showNotification(
+        `ordered ${selectedTiles.length} ${tileLabel} by ${getTileOrderCriterionLabel(criterion)}`,
+      );
+    },
+    [
+      beginTileDragCheckpoint,
+      commitTileDragCheckpoint,
+      repositionTiles,
+      saveCanvasSilently,
+      showNotification,
+      tiles,
+      validSelectedTileIds,
+    ],
+  );
 
   const {
     clipboardRevision,
@@ -488,6 +558,7 @@ export function useAppCanvas() {
     handleContextMenuPaste,
     handleCopyTiles,
     handleDeleteTiles,
+    handleOrderSelectedTiles,
     handlePlaylistLoad,
     handleRedoLayout,
     handleUndoLayout,

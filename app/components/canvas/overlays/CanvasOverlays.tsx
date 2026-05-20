@@ -1,6 +1,7 @@
 "use client";
 
 import { CanvasContextMenu } from "../CanvasContextMenu";
+import type { TileOrderCriterion } from "../../../lib/canvas/tile-ordering";
 import type { PlaylistLoadStatus } from "../../../hooks/playlist/usePlaylistVideos";
 import type { ContextMenuState, ToastNotice } from "../../../types/canvas-interaction";
 
@@ -10,6 +11,7 @@ type CanvasOverlaysProps = {
   handleContextMenuPaste: () => Promise<boolean>;
   handleCopyTiles: () => boolean;
   handleDeleteTiles: () => boolean;
+  handleOrderSelectedTiles: (criterion: TileOrderCriterion) => Promise<void>;
   isSlowPlaylistLoad: boolean;
   loadNotification: ToastNotice | null;
   menuCanPaste: boolean;
@@ -22,6 +24,7 @@ export function CanvasOverlays({
   handleContextMenuPaste,
   handleCopyTiles,
   handleDeleteTiles,
+  handleOrderSelectedTiles,
   isSlowPlaylistLoad,
   loadNotification,
   menuCanPaste,
@@ -46,12 +49,16 @@ export function CanvasOverlays({
         <CanvasContextMenu
           canCopy={contextMenuState.replaceTileIds.length > 0}
           canDelete={contextMenuState.replaceTileIds.length > 0}
+          canOrder={contextMenuState.replaceTileIds.length > 1}
           canPaste={menuCanPaste}
           clientX={contextMenuState.clientX}
           clientY={contextMenuState.clientY}
           onClose={closeContextMenu}
           onCopy={handleCopyTiles}
           onDelete={handleDeleteTiles}
+          onOrderBy={(criterion) => {
+            void handleOrderSelectedTiles(criterion);
+          }}
           onPaste={() => {
             void handleContextMenuPaste();
           }}

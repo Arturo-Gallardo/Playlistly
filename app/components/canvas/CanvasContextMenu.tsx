@@ -2,17 +2,20 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type { TileOrderCriterion } from "../../lib/canvas/tile-ordering";
 import { cn } from "../../lib/cn";
 
 type CanvasContextMenuProps = {
   canCopy: boolean;
   canDelete: boolean;
+  canOrder: boolean;
   canPaste: boolean;
   clientX: number;
   clientY: number;
   onClose: () => void;
   onCopy: () => void;
   onDelete: () => void;
+  onOrderBy: (criterion: TileOrderCriterion) => void;
   onPaste: () => void;
 };
 
@@ -24,15 +27,23 @@ type MenuPosition = {
 const menuItemClassName =
   "font-control flex w-full cursor-default items-center justify-between gap-3 rounded-md border-0 bg-transparent px-2.5 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-white/90 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/30 disabled:hover:bg-transparent";
 
+const orderMenuItems: Array<{ criterion: TileOrderCriterion; label: string }> = [
+  { criterion: "color", label: "Color" },
+  { criterion: "artist", label: "Artist" },
+  { criterion: "date", label: "Date" },
+];
+
 export function CanvasContextMenu({
   canCopy,
   canDelete,
+  canOrder,
   canPaste,
   clientX,
   clientY,
   onClose,
   onCopy,
   onDelete,
+  onOrderBy,
   onPaste,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -104,7 +115,6 @@ export function CanvasContextMenu({
       }
     }
 
-    // defer so the opening right-click does not dismiss the menu immediately
     const listenerFrame = window.requestAnimationFrame(() => {
       window.addEventListener("pointerdown", handlePointerDown, true);
       window.addEventListener("keydown", handleKeyDown);
@@ -169,6 +179,30 @@ export function CanvasContextMenu({
       >
         <span>Delete</span>
       </button>
+
+      <div
+        className="mx-2 my-1 border-t border-white/10"
+        role="separator"
+      />
+
+      <p className="px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">
+        Order by
+      </p>
+      {orderMenuItems.map((item) => (
+        <button
+          key={item.criterion}
+          className={cn(menuItemClassName, !canOrder && "text-white/30")}
+          disabled={!canOrder}
+          onClick={() => {
+            onOrderBy(item.criterion);
+            onClose();
+          }}
+          role="menuitem"
+          type="button"
+        >
+          <span>{item.label}</span>
+        </button>
+      ))}
     </div>,
     document.body,
   );

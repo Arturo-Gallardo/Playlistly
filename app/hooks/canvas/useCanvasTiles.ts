@@ -521,6 +521,44 @@ export function useCanvasTiles({
     [setTileStateWithRef],
   );
 
+  const repositionTiles = useCallback(
+    (updates: Array<{ id: string; x: number; y: number }>) => {
+      if (updates.length === 0) {
+        return;
+      }
+
+      setTileStateWithRef((currentState) => {
+        const updateById = new Map(
+          updates.map((update) => [update.id, update]),
+        );
+        const nextMovedTileIds = new Set(currentState.movedTileIds);
+        const nextTiles = currentState.tiles.map((tile) => {
+          const update = updateById.get(tile.id);
+
+          if (!update) {
+            return tile;
+          }
+
+          nextMovedTileIds.add(tile.id);
+
+          return {
+            ...tile,
+            x: update.x,
+            y: update.y,
+          };
+        });
+
+        return {
+          ...currentState,
+          bounds: getRectBounds(nextTiles),
+          movedTileIds: nextMovedTileIds,
+          tiles: nextTiles,
+        };
+      });
+    },
+    [setTileStateWithRef],
+  );
+
   const canUndo = undoStackRef.current.length > 0;
   const canRedo = redoStackRef.current.length > 0;
   void historyRevision;
@@ -542,6 +580,7 @@ export function useCanvasTiles({
     placeTilesAtWorldPoint,
     redoTiles,
     removeTilesByIds,
+    repositionTiles,
     resetTileState,
     restoreTileState,
     revertTileDragCheckpoint,

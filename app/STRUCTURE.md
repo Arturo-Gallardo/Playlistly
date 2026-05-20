@@ -15,7 +15,7 @@ app/
     playlist/      Load playlists, cache helpers
     toolbar/       Toolbar press feedback, onboarding placements
   lib/
-    canvas/        Layout, storage, import/export, selection, clipboard
+    canvas/        Layout, storage, import/export, ordering, selection, clipboard
     playlist/      Video wire format, cache, source helpers
     youtube/       YouTube Data API client
   types/           Shared TypeScript types

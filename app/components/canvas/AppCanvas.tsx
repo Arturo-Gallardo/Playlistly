@@ -112,6 +112,7 @@ export function AppCanvas() {
         handleContextMenuPaste={canvas.handleContextMenuPaste}
         handleCopyTiles={canvas.handleCopyTiles}
         handleDeleteTiles={canvas.handleDeleteTiles}
+        handleOrderSelectedTiles={canvas.handleOrderSelectedTiles}
         isSlowPlaylistLoad={canvas.isSlowPlaylistLoad}
         loadNotification={canvas.loadNotification}
         menuCanPaste={canvas.menuCanPaste}

@@ -79,7 +79,7 @@ export function SettingsDialog({
               display
             </h3>
             <SettingsToggle
-              description="show title and channel when hovering a tile"
+              description="show artist, title, and publish date when hovering a tile"
               isOn={!areVideoDetailsHidden}
               label="video details on hover"
               onChange={(isOn) => onVideoDetailsHiddenChange(!isOn)}
