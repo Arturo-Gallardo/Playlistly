@@ -20,13 +20,16 @@ import {
   getVisibleCanvasTiles,
   getVisibleWorldRect,
   normalizeRect,
-  rectsIntersect,
   screenToWorld,
   type CanvasTile,
   type Point,
   type Rect,
   type ViewportSize,
 } from "../lib/canvas-layout";
+import {
+  getNextSelectedTileIds,
+  resolveMarqueeSelection,
+} from "../lib/canvas-selection";
 import { playlistSourcesInclude } from "../lib/playlist-source";
 import {
   buildPastedTileEntries,
@@ -84,6 +87,8 @@ type DragMode =
   | {
       type: "selectBox";
       pointerId: number;
+      baseSelection: Set<string>;
+      isAdditive: boolean;
       startWorldPoint: Point;
       currentWorldPoint: Point;
     };
@@ -909,10 +914,19 @@ export function AppCanvas() {
       return;
     }
 
-    setSelectedTileIds(new Set());
+    const isAdditive = event.ctrlKey || event.metaKey;
+
+    if (!isAdditive) {
+      setSelectedTileIds(new Set());
+    }
+
     setDragMode({
       type: "selectBox",
       pointerId: event.pointerId,
+      baseSelection: isAdditive
+        ? new Set(selectedTileIdsRef.current)
+        : new Set(),
+      isAdditive,
       startWorldPoint: worldPoint,
       currentWorldPoint: worldPoint,
     });
@@ -991,10 +1005,21 @@ export function AppCanvas() {
       return;
     }
 
-    setDragMode({
-      ...dragMode,
-      currentWorldPoint: worldPoint,
-    });
+    if (dragMode.type === "selectBox") {
+      setSelectedTileIds(
+        resolveMarqueeSelection({
+          baseSelection: dragMode.baseSelection,
+          isAdditive: dragMode.isAdditive,
+          tiles,
+          startWorldPoint: dragMode.startWorldPoint,
+          endWorldPoint: worldPoint,
+        }),
+      );
+      setDragMode({
+        ...dragMode,
+        currentWorldPoint: worldPoint,
+      });
+    }
   }
 
   function endActiveDrag(
@@ -1007,12 +1032,24 @@ export function AppCanvas() {
       return;
     }
 
-    if (outcome === "commit" && endedDragMode.type === "selectBox") {
-      const rect = normalizeRect(
-        endedDragMode.startWorldPoint,
-        endedDragMode.currentWorldPoint,
-      );
-      setSelectedTileIds(getTilesInsideRect(tiles, rect));
+    if (endedDragMode.type === "selectBox") {
+      if (outcome === "commit") {
+        setSelectedTileIds(
+          resolveMarqueeSelection({
+            baseSelection: endedDragMode.baseSelection,
+            isAdditive: endedDragMode.isAdditive,
+            tiles,
+            startWorldPoint: endedDragMode.startWorldPoint,
+            endWorldPoint: endedDragMode.currentWorldPoint,
+          }),
+        );
+      } else {
+        setSelectedTileIds(
+          endedDragMode.isAdditive
+            ? new Set(endedDragMode.baseSelection)
+            : new Set(),
+        );
+      }
     }
 
     if (endedDragMode.type === "moveTiles") {
@@ -1061,6 +1098,9 @@ export function AppCanvas() {
     syncPointerModifiers(event, true);
     event.stopPropagation();
 
+    viewportRef.current?.focus({ preventScroll: true });
+    viewportRef.current?.setPointerCapture(event.pointerId);
+
     const startScreenPoint = getViewportPoint(event, viewportRef.current);
 
     if (isTileDoubleClick(tile.id, startScreenPoint, lastTileClickRef.current)) {
@@ -1077,7 +1117,7 @@ export function AppCanvas() {
 
     const nextSelectedTileIds = getNextSelectedTileIds({
       isAdditive: event.ctrlKey || event.metaKey,
-      selectedTileIds,
+      selectedTileIds: selectedTileIdsRef.current,
       tileId: tile.id,
     });
 
@@ -1156,7 +1196,7 @@ export function AppCanvas() {
 
     const nextSelectedTileIds = getNextSelectedTileIds({
       isAdditive: event.ctrlKey || event.metaKey,
-      selectedTileIds,
+      selectedTileIds: selectedTileIdsRef.current,
       tileId: tile.id,
     });
 
@@ -1404,38 +1444,3 @@ function getSelectionRect(dragMode: DragMode | null): Rect | null {
   return normalizeRect(dragMode.startWorldPoint, dragMode.currentWorldPoint);
 }
 
-function getTilesInsideRect(tiles: CanvasTile[], rect: Rect) {
-  const selectedIds = new Set<string>();
-
-  for (const tile of tiles) {
-    if (rectsIntersect(tile, rect)) {
-      selectedIds.add(tile.id);
-    }
-  }
-
-  return selectedIds;
-}
-
-function getNextSelectedTileIds({
-  isAdditive,
-  selectedTileIds,
-  tileId,
-}: {
-  isAdditive: boolean;
-  selectedTileIds: Set<string>;
-  tileId: string;
-}) {
-  if (!isAdditive) {
-    return selectedTileIds.has(tileId) ? selectedTileIds : new Set([tileId]);
-  }
-
-  const nextSelectedTileIds = new Set(selectedTileIds);
-
-  if (nextSelectedTileIds.has(tileId)) {
-    nextSelectedTileIds.delete(tileId);
-  } else {
-    nextSelectedTileIds.add(tileId);
-  }
-
-  return nextSelectedTileIds;
-}
