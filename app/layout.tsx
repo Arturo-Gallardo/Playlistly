@@ -5,6 +5,7 @@ import { michroma, nunito, saira } from "./fonts";
 import { authOptions } from "./lib/auth";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Playlistly",
@@ -35,6 +36,7 @@ export default async function RootLayout({
       <body>
         <AuthProvider session={session}>{children}</AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

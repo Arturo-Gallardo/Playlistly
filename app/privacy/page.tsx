@@ -101,11 +101,19 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Hosting">
+      <LegalSection title="Hosting and analytics">
         <p>
           The site is hosted on Vercel. Vercel may process standard web logs (IP
-          address, request timing, errors) as part of running the service. We do
-          not use third-party analytics or ad trackers in the app.
+          address, request timing, errors) as part of running the service.
+        </p>
+        <p>
+          We use{" "}
+          <strong className="text-white/90">Vercel Web Analytics</strong> and{" "}
+          <strong className="text-white/90">Speed Insights</strong> to see how
+          the app is used and how fast it loads. These tools collect anonymous
+          metrics — page views, referrers, and Core Web Vitals — through
+          Vercel&apos;s own infrastructure. They are not used for ads, and we do
+          not run Google Analytics or other ad trackers.
         </p>
       </LegalSection>
 
