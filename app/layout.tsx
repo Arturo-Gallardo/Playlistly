@@ -4,6 +4,7 @@ import { AuthProvider } from "./components/auth/AuthProvider";
 import { michroma, nunito, saira } from "./fonts";
 import { authOptions } from "./lib/auth";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Playlistly",
@@ -33,6 +34,7 @@ export default async function RootLayout({
       </head>
       <body>
         <AuthProvider session={session}>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
