@@ -7,7 +7,7 @@ app/
     canvas/        Grid, viewport, context menu, shortcuts
       overlays/    Toasts, loading, welcome
       viewport/    Pan/zoom surface + video detail panel
-    shared/        Cross-feature UI (keyboard chord display)
+    shared/        Cross-feature UI (keyboard chord, error fallback)
     toolbar/       Header, playlist input, pan buttons, video search, zoom, settings
     ui/            Primitive UI (kbd)
   hooks/
@@ -21,6 +21,7 @@ app/
     youtube/       YouTube Data API client
   types/           Shared TypeScript types
   api/             Route handlers
+  privacy/         Privacy page route
 ```
 
 When adding a feature, put files in the matching domain folder instead of the `app/` root.

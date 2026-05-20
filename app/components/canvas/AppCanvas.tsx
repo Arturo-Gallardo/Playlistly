@@ -7,6 +7,7 @@ import { AppToolbar } from "../toolbar/AppToolbar";
 import { ExportLayoutDialog } from "../toolbar/ExportLayoutDialog";
 import { SettingsDialog } from "../toolbar/SettingsDialog";
 import { CanvasEmptyState } from "./CanvasEmptyState";
+import { CanvasErrorBoundary } from "./CanvasErrorBoundary";
 import { CanvasOnboardingHints } from "./CanvasOnboardingHints";
 import { CanvasShortcutLegend } from "./CanvasShortcutLegend";
 import { CanvasOverlays } from "./overlays/CanvasOverlays";
@@ -16,17 +17,22 @@ import { CanvasViewport } from "./viewport/CanvasViewport";
 import type { HoveredVideoDetails } from "./VideoGrid";
 
 export function AppCanvas() {
-  const [hoveredVideoDetails, setHoveredVideoDetails] =
-    useState<HoveredVideoDetails | null>(null);
+  return (
+    <main className="canvas-app-enter relative h-dvh overflow-hidden bg-[#111111] text-white">
+      <AppCanvasRoot />
+    </main>
+  );
+}
+
+function AppCanvasRoot() {
+  const canvas = useAppCanvas();
+  const welcome = useWelcomeOverlay();
+  const [stageKey, setStageKey] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
-  const canvas = useAppCanvas();
-  const { pointer } = canvas;
-  const welcome = useWelcomeOverlay();
-
   return (
-    <main className="canvas-app-enter relative h-dvh overflow-hidden bg-[#111111] text-white">
+    <>
       <AppToolbar
         canFitAllTiles={canvas.canFitAllTiles}
         canRedo={canvas.canRedoLayout}
@@ -45,14 +51,52 @@ export function AppCanvas() {
         onFitAllTiles={canvas.handleFitAllTiles}
         onFocusVideoTile={canvas.handleFocusVideoTile}
         onPlaylistLoad={canvas.handlePlaylistLoad}
-        tiles={canvas.tiles}
-        onZoomIn={canvas.handleZoomIn}
-        onZoomOut={canvas.handleZoomOut}
         onPickerOpenChange={canvas.setIsPlaylistPickerOpen}
         onSettingsOpen={() => setIsSettingsOpen(true)}
+        onZoomIn={canvas.handleZoomIn}
+        onZoomOut={canvas.handleZoomOut}
         playlistStatus={canvas.playlistStatus}
+        tiles={canvas.tiles}
       />
 
+      <CanvasErrorBoundary onReset={() => setStageKey((current) => current + 1)}>
+        <AppCanvasStage
+          canvas={canvas}
+          isExportDialogOpen={isExportDialogOpen}
+          isSettingsOpen={isSettingsOpen}
+          key={stageKey}
+          onCloseExport={() => setIsExportDialogOpen(false)}
+          onCloseSettings={() => setIsSettingsOpen(false)}
+          welcome={welcome}
+        />
+      </CanvasErrorBoundary>
+    </>
+  );
+}
+
+type AppCanvasStageProps = {
+  canvas: ReturnType<typeof useAppCanvas>;
+  isExportDialogOpen: boolean;
+  isSettingsOpen: boolean;
+  onCloseExport: () => void;
+  onCloseSettings: () => void;
+  welcome: ReturnType<typeof useWelcomeOverlay>;
+};
+
+function AppCanvasStage({
+  canvas,
+  isExportDialogOpen,
+  isSettingsOpen,
+  onCloseExport,
+  onCloseSettings,
+  welcome,
+}: AppCanvasStageProps) {
+  const [hoveredVideoDetails, setHoveredVideoDetails] =
+    useState<HoveredVideoDetails | null>(null);
+  const { pointer } = canvas;
+
+  return (
+    <>
       {canvas.tiles.length === 0 && canvas.playlistStatus !== "loading" ? (
         <>
           <CanvasEmptyState />
@@ -102,7 +146,7 @@ export function AppCanvas() {
 
       {isExportDialogOpen ? (
         <ExportLayoutDialog
-          onClose={() => setIsExportDialogOpen(false)}
+          onClose={onCloseExport}
           onExport={canvas.handleCanvasExport}
         />
       ) : null}
@@ -113,7 +157,7 @@ export function AppCanvas() {
           isShortcutLegendVisible={canvas.isShortcutLegendVisible}
           onClearPlaylistCache={canvas.handleClearPlaylistCache}
           onClearSavedLayout={canvas.handleClearSavedLayout}
-          onClose={() => setIsSettingsOpen(false)}
+          onClose={onCloseSettings}
           onShortcutLegendVisibleChange={canvas.setIsShortcutLegendVisible}
           onVideoDetailsHiddenChange={canvas.setAreVideoDetailsHidden}
         />
@@ -135,6 +179,6 @@ export function AppCanvas() {
         menuCanPaste={canvas.menuCanPaste}
         playlistStatus={canvas.playlistStatus}
       />
-    </main>
+    </>
   );
 }

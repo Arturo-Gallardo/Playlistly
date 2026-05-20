@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../../lib/cn";
@@ -108,7 +109,14 @@ export function SettingsDialog({
             />
           </section>
 
-          <footer className="flex justify-end border-t border-white/10 pt-3">
+          <footer className="flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+            <Link
+              className="text-[10px] text-white/45 underline decoration-white/20 underline-offset-2 transition hover:text-[#CA3E47] hover:decoration-[#CA3E47]/50"
+              href="/privacy"
+              onClick={onClose}
+            >
+              Privacy
+            </Link>
             <button
               className="toolbar-button px-4 py-2 text-[10px]"
               onClick={onClose}

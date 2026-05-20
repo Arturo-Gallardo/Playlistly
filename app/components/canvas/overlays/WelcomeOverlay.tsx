@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { LayoutGrid, Palette, Search, Upload } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
@@ -111,7 +112,13 @@ export function WelcomeOverlay({ onContinue }: WelcomeOverlayProps) {
             </ul>
           </section>
 
-          <footer className="flex justify-end border-t border-white/10 pt-4">
+          <footer className="flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+            <Link
+              className="text-[10px] text-white/45 underline decoration-white/20 underline-offset-2 transition hover:text-[#CA3E47] hover:decoration-[#CA3E47]/50"
+              href="/privacy"
+            >
+              Privacy
+            </Link>
             <button
               className="toolbar-button px-5 py-2 text-[11px]"
               onClick={onContinue}
