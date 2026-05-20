@@ -22,6 +22,7 @@ app/
   types/           Shared TypeScript types
   api/             Route handlers
   privacy/         Privacy page route
+  terms/           Terms of service route
 ```
 
 When adding a feature, put files in the matching domain folder instead of the `app/` root.

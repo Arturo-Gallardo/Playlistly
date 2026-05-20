@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ContactEmailLink } from "../components/shared/ContactEmailLink";
 import {
   LegalDocumentPage,
   LegalSection,
 } from "../components/shared/LegalDocumentPage";
-
-const privacyContactEmail = "angel.a.gallardo.cevallos@gmail.com";
+import { legalContactEmail } from "../lib/legal/contact-email";
 
 export const metadata: Metadata = {
   title: "Privacy — Playlistly",
@@ -144,8 +144,12 @@ export default function PrivacyPage() {
       <LegalSection title="Contact">
         <p>
           Questions about privacy? Reach us at{" "}
-          <ContactEmailLink email={privacyContactEmail} />. There is no separate
-          data-export portal because we do not hold your layouts on our servers.
+          <ContactEmailLink email={legalContactEmail} />. See also our{" "}
+          <Link className="legal-page-link" href="/terms">
+            Terms of Service
+          </Link>
+          . There is no separate data-export portal because we do not hold your
+          layouts on our servers.
         </p>
       </LegalSection>
     </LegalDocumentPage>

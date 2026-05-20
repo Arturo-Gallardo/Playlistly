@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LegalPageLinks } from "./LegalPageLinks";
 
 type LegalDocumentPageProps = {
   children: ReactNode;
@@ -35,7 +36,8 @@ export function LegalDocumentPage({
             {children}
           </article>
 
-          <footer className="border-t border-white/10 pt-6">
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6">
+            <LegalPageLinks />
             <Link
               className="toolbar-button inline-block px-4 py-2 text-[11px]"
               href="/"
