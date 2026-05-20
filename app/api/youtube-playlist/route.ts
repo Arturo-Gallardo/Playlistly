@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchYouTubePlaylistVideos,
   YouTubePlaylistError,
-} from "../../lib/youtube-playlist";
+} from "../../lib/youtube/youtube-playlist";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

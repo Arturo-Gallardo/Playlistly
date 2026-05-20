@@ -48,24 +48,3 @@ export type YouTubePlaylistsApiSuccess = {
 export type YouTubePlaylistsApiResponse =
   | YouTubePlaylistsApiSuccess
   | PlaylistApiError;
-
-export type YouTubePlaylistPrivacyStatus = "public" | "unlisted" | "private";
-
-export type SaveYouTubePlaylistMode = "new" | "existing";
-
-export type SaveYouTubePlaylistRequest = {
-  mode: SaveYouTubePlaylistMode;
-  videoIds: string[];
-  title?: string;
-  privacyStatus?: YouTubePlaylistPrivacyStatus;
-  playlistId?: string;
-};
-
-export type SaveYouTubePlaylistSuccess = {
-  playlistId: string;
-  playlistUrl: string;
-};
-
-export type SaveYouTubePlaylistApiResponse =
-  | SaveYouTubePlaylistSuccess
-  | PlaylistApiError;

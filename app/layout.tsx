@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { AuthProvider } from "./components/AuthProvider";
+import { AuthProvider } from "./components/auth/AuthProvider";
 import { michroma, nunito, saira } from "./fonts";
 import { authOptions } from "./lib/auth";
 import "./globals.css";

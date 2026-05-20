@@ -251,11 +251,6 @@ body {
   background: #ca3e47;
 }
 
-.save-playlist-video-list {
-  scrollbar-color: rgb(202 62 71 / 70%) transparent;
-  scrollbar-width: thin;
-}
-
 .canvas-app-enter {
   animation: canvas-app-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -344,14 +339,6 @@ body {
     opacity: 1;
     translate: 0 0;
   }
-}
-
-.save-playlist-drag-handle {
-  touch-action: none;
-}
-
-.save-playlist-drag-handle:hover {
-  color: rgb(255 255 255 / 75%);
 }
 
 .playlist-loading-card {

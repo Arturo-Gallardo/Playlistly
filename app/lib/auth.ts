@@ -5,7 +5,7 @@ const youtubeScope = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/youtube",
+  "https://www.googleapis.com/auth/youtube.readonly",
 ].join(" ");
 
 export const authOptions: AuthOptions = {
