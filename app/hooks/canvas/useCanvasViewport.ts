@@ -12,7 +12,7 @@ import { getViewportSize } from "../../lib/canvas/canvas-viewport";
 
 type UseCanvasViewportOptions = {
   bounds: Rect;
-  centerCameraOnRect: (rect: Rect, viewportSize: ViewportSize) => void;
+  fitCameraToRect: (rect: Rect, viewportSize: ViewportSize) => void;
   getLiveCamera: () => { x: number; y: number; zoom: number };
   movedTileIds: Set<string>;
   tiles: CanvasTile[];
@@ -20,7 +20,7 @@ type UseCanvasViewportOptions = {
 
 export function useCanvasViewport({
   bounds,
-  centerCameraOnRect,
+  fitCameraToRect,
   getLiveCamera,
   movedTileIds,
   tiles,
@@ -83,13 +83,13 @@ export function useCanvasViewport({
     }
 
     const rectToCenter = pendingCenterRectRef.current ?? bounds;
-    centerCameraOnRect(rectToCenter, viewportSize);
+    fitCameraToRect(rectToCenter, viewportSize);
     pendingCenterRectRef.current = null;
     didCenterInitialTilesRef.current = true;
     centeredPlaylistRequestRef.current = centerPlaylistRequest;
   }, [
     bounds,
-    centerCameraOnRect,
+    fitCameraToRect,
     centerPlaylistRequest,
     tiles.length,
     viewportSize,

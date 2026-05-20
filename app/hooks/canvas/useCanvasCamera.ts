@@ -1,39 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Point, Rect } from "../../lib/canvas/canvas-layout";
-
-type Camera = {
-  x: number;
-  y: number;
-  zoom: number;
-};
-
-const minZoom = 0.5;
-const maxZoom = 2.4;
+import {
+  clampCameraZoom,
+  fitCameraToRect as buildFitCamera,
+  focusCameraOnRect as buildFocusCamera,
+  type CameraState,
+} from "../../lib/canvas/camera-fit";
+import type { Point, Rect, ViewportSize } from "../../lib/canvas/canvas-layout";
 
 // this is the starting camera position inside the larger canvas
-const startCamera: Camera = {
+const startCamera: CameraState = {
   x: 80,
   y: 110,
   zoom: 1,
 };
 
-function clampZoom(zoom: number) {
-  // keep the canvas from getting too tiny or too huge
-  return Math.min(maxZoom, Math.max(minZoom, zoom));
-}
-
-function getCameraTransform(camera: Camera) {
+function getCameraTransform(camera: CameraState) {
   return `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
 }
 
 export function useCanvasCamera() {
-  const [camera, setCamera] = useState<Camera>(startCamera);
+  const [camera, setCamera] = useState<CameraState>(startCamera);
   const cameraRef = useRef(camera);
   const worldLayerRef = useRef<HTMLDivElement | null>(null);
 
-  const applyCameraToWorld = useCallback((nextCamera: Camera) => {
+  const applyCameraToWorld = useCallback((nextCamera: CameraState) => {
     const worldLayer = worldLayerRef.current;
 
     if (worldLayer) {
@@ -42,7 +34,7 @@ export function useCanvasCamera() {
   }, []);
 
   const commitCamera = useCallback(
-    (nextCamera: Camera) => {
+    (nextCamera: CameraState) => {
       cameraRef.current = nextCamera;
       setCamera(nextCamera);
       applyCameraToWorld(nextCamera);
@@ -74,17 +66,16 @@ export function useCanvasCamera() {
     setCamera({ ...cameraRef.current });
   }, []);
 
-  const centerCameraOnRect = useCallback(
-    (rect: Rect, viewportSize: { width: number; height: number }) => {
-      commitCamera({
-        ...cameraRef.current,
-        x:
-          viewportSize.width / 2 -
-          (rect.x + rect.width / 2) * cameraRef.current.zoom,
-        y:
-          viewportSize.height / 2 -
-          (rect.y + rect.height / 2) * cameraRef.current.zoom,
-      });
+  const fitCameraToRect = useCallback(
+    (rect: Rect, viewportSize: ViewportSize) => {
+      commitCamera(buildFitCamera(rect, viewportSize));
+    },
+    [commitCamera],
+  );
+
+  const focusCameraOnRect = useCallback(
+    (rect: Rect, viewportSize: ViewportSize) => {
+      commitCamera(buildFocusCamera(rect, viewportSize));
     },
     [commitCamera],
   );
@@ -96,7 +87,7 @@ export function useCanvasCamera() {
   const zoomAtPoint = useCallback(
     (point: Point, nextZoom: number) => {
       const currentCamera = cameraRef.current;
-      const zoom = clampZoom(nextZoom);
+      const zoom = clampCameraZoom(nextZoom);
       const zoomChange = zoom / currentCamera.zoom;
 
       commitCamera({
@@ -112,7 +103,8 @@ export function useCanvasCamera() {
 
   return {
     camera,
-    centerCameraOnRect,
+    fitCameraToRect,
+    focusCameraOnRect,
     getLiveCamera,
     panBy,
     resetCamera,

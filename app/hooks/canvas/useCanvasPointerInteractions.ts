@@ -10,6 +10,7 @@ import {
   type WheelEvent,
 } from "react";
 import type { CanvasInteraction } from "../../components/canvas/CanvasShortcutLegend";
+import { cameraZoomStep } from "../../lib/canvas/camera-fit";
 import {
   buildGrabOffsets,
   screenToWorld,
@@ -431,7 +432,7 @@ export function useCanvasPointerInteractions({
         x: event.clientX - (rect?.left ?? 0),
         y: event.clientY - (rect?.top ?? 0),
       },
-      getLiveCamera().zoom + zoomDirection * 0.12,
+      getLiveCamera().zoom + zoomDirection * cameraZoomStep,
     );
     syncCamera();
   }

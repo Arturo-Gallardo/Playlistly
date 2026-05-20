@@ -20,10 +20,20 @@ type ShortcutRow = {
 
 const canvasShortcuts: ShortcutRow[] = [
   {
+    id: "fit",
+    label: "Fit all tiles",
+    parts: [{ type: "key", label: "0" }],
+  },
+  {
     id: "pan",
     label: "Pan canvas",
     activeWhenInteraction: "pan",
     parts: [{ type: "middleClick" }],
+  },
+  {
+    id: "zoom",
+    label: "Zoom canvas",
+    parts: [{ type: "key", label: "Wheel" }],
   },
   {
     id: "pan-alt",

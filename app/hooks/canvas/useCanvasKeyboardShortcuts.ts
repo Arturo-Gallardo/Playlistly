@@ -4,6 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import { isEditableTarget } from "../../lib/canvas/canvas-input";
 
 export type CanvasKeyboardActions = {
+  canFitAllTiles: boolean;
   canRedoLayout: boolean;
   canUndoLayout: boolean;
   clearCanvas: () => void;
@@ -11,6 +12,7 @@ export type CanvasKeyboardActions = {
   handleCopyTiles: () => boolean;
   handleDeleteTiles: () => boolean;
   handlePasteTiles: () => Promise<boolean>;
+  handleFitAllTiles: () => void;
   handleRedoLayout: () => void;
   handleUndoLayout: () => void;
   saveCanvasNow: () => void;
@@ -24,6 +26,7 @@ export function useCanvasKeyboardShortcuts({
   selectedTileIdsRef,
 }: UseCanvasKeyboardShortcutsOptions) {
   const keyboardActionsRef = useRef<CanvasKeyboardActions>({
+    canFitAllTiles: false,
     canRedoLayout: false,
     canUndoLayout: false,
     clearCanvas: () => {},
@@ -31,6 +34,7 @@ export function useCanvasKeyboardShortcuts({
     handleCopyTiles: () => false,
     handleDeleteTiles: () => false,
     handlePasteTiles: async () => false,
+    handleFitAllTiles: () => {},
     handleRedoLayout: () => {},
     handleUndoLayout: () => {},
     saveCanvasNow: () => {},
@@ -59,6 +63,16 @@ export function useCanvasKeyboardShortcuts({
 
         event.preventDefault();
         actions.handleDeleteTiles();
+        return;
+      }
+
+      if (event.code === "Digit0" && !isModHeld(event)) {
+        if (!actions.canFitAllTiles) {
+          return;
+        }
+
+        event.preventDefault();
+        actions.handleFitAllTiles();
         return;
       }
 

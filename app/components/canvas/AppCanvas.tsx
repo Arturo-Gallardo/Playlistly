@@ -28,9 +28,12 @@ export function AppCanvas() {
   return (
     <main className="canvas-app-enter relative h-dvh overflow-hidden bg-[#111111] text-white">
       <AppToolbar
+        canFitAllTiles={canvas.canFitAllTiles}
         canRedo={canvas.canRedoLayout}
         canSave={canvas.canSave}
         canUndo={canvas.canUndoLayout}
+        canZoomIn={canvas.canZoomIn}
+        canZoomOut={canvas.canZoomOut}
         errorMessage={canvas.errorMessage}
         hasTilesOnCanvas={canvas.tiles.length > 0}
         onCanvasClear={canvas.clearCanvas}
@@ -39,7 +42,12 @@ export function AppCanvas() {
         onCanvasRedo={canvas.handleRedoLayout}
         onCanvasSave={canvas.saveCanvasNow}
         onCanvasUndo={canvas.handleUndoLayout}
+        onFitAllTiles={canvas.handleFitAllTiles}
+        onFocusVideoTile={canvas.handleFocusVideoTile}
         onPlaylistLoad={canvas.handlePlaylistLoad}
+        tiles={canvas.tiles}
+        onZoomIn={canvas.handleZoomIn}
+        onZoomOut={canvas.handleZoomOut}
         onPickerOpenChange={canvas.setIsPlaylistPickerOpen}
         onSettingsOpen={() => setIsSettingsOpen(true)}
         playlistStatus={canvas.playlistStatus}

@@ -9,7 +9,10 @@ const YOUTUBE_PLAYLIST_ITEMS_URL =
   "https://www.googleapis.com/youtube/v3/playlistItems";
 const YOUTUBE_PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists";
 export const MAX_PLAYLIST_VIDEOS = 5000;
+export const MAX_PLAYLIST_INPUT_LENGTH = 2048;
 const DEFAULT_USER_PLAYLIST_LIMIT = 200;
+
+const PLAYLIST_ID_PATTERN = /^[A-Za-z0-9_-]{10,100}$/;
 
 type YouTubeThumbnail = {
   url?: string;
@@ -88,10 +91,46 @@ export function getPlaylistId(input: string) {
 
   try {
     const url = new URL(trimmedInput);
+    const hostname = url.hostname.replace(/^www\./, "");
+
+    if (hostname !== "youtube.com" && hostname !== "youtu.be") {
+      return null;
+    }
+
     return url.searchParams.get("list");
   } catch {
     return trimmedInput;
   }
+}
+
+export function isValidYouTubePlaylistId(playlistId: string) {
+  return PLAYLIST_ID_PATTERN.test(playlistId);
+}
+
+type PlaylistQueryResult =
+  | { ok: true; playlistId: string }
+  | { ok: false; error: string };
+
+/** Validate playlist query param before hitting YouTube. */
+export function parsePlaylistQuery(input: string): PlaylistQueryResult {
+  if (!input.trim()) {
+    return { ok: false, error: "Add a playlist query parameter." };
+  }
+
+  if (input.length > MAX_PLAYLIST_INPUT_LENGTH) {
+    return { ok: false, error: "Playlist input is too long." };
+  }
+
+  const playlistId = getPlaylistId(input);
+
+  if (!playlistId || !isValidYouTubePlaylistId(playlistId)) {
+    return {
+      ok: false,
+      error: "Paste a valid YouTube playlist URL or ID.",
+    };
+  }
+
+  return { ok: true, playlistId };
 }
 
 export async function fetchYouTubePlaylistVideos(

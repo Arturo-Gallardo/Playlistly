@@ -1,5 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitExceededResponse } from "../../lib/api/rate-limit-response";
+import { enforceUserPlaylistsLimit } from "../../lib/api/youtube-rate-limit";
 import {
   fetchYouTubeUserPlaylists,
   YouTubePlaylistError,
@@ -14,6 +16,19 @@ export async function GET(request: NextRequest) {
       { error: "Sign in with Google to see your YouTube playlists." },
       { status: 401 },
     );
+  }
+
+  if (typeof token.sub !== "string") {
+    return NextResponse.json(
+      { error: "Could not verify your session." },
+      { status: 401 },
+    );
+  }
+
+  const rateLimit = enforceUserPlaylistsLimit(request, token.sub);
+
+  if (!rateLimit.allowed) {
+    return rateLimitExceededResponse(rateLimit);
   }
 
   try {

@@ -22,6 +22,11 @@ import { useCanvasPointerInteractions } from "./useCanvasPointerInteractions";
 import { useCanvasSelection } from "./useCanvasSelection";
 import { useCanvasViewport } from "./useCanvasViewport";
 import {
+  cameraZoomLimits,
+  cameraZoomStep,
+  getViewportCenterPoint,
+} from "../../lib/canvas/camera-fit";
+import {
   buildOrderedTilePositions,
   getTileOrderCriterionLabel,
   sortTilesByArtist,
@@ -65,7 +70,8 @@ export function useAppCanvas() {
 
   const {
     camera,
-    centerCameraOnRect,
+    fitCameraToRect,
+    focusCameraOnRect,
     getLiveCamera,
     panBy,
     resetCamera,
@@ -137,7 +143,7 @@ export function useAppCanvas() {
     visibleTiles,
   } = useCanvasViewport({
     bounds,
-    centerCameraOnRect,
+    fitCameraToRect,
     getLiveCamera,
     movedTileIds,
     tiles,
@@ -355,11 +361,66 @@ export function useAppCanvas() {
     tileClipboardRef,
   });
 
+  const handleFitAllTiles = useCallback(() => {
+    if (!viewportSize || tiles.length === 0) {
+      return;
+    }
+
+    fitCameraToRect(bounds, viewportSize);
+  }, [bounds, fitCameraToRect, tiles.length, viewportSize]);
+
+  const handleFocusVideoTile = useCallback(
+    (tileId: string) => {
+      if (!viewportSize) {
+        return;
+      }
+
+      const tile = tiles.find((entry) => entry.id === tileId);
+
+      if (!tile) {
+        return;
+      }
+
+      focusCameraOnRect(tile, viewportSize);
+      setSelectedTileIds(new Set([tileId]));
+    },
+    [focusCameraOnRect, setSelectedTileIds, tiles, viewportSize],
+  );
+
+  const handleZoomIn = useCallback(() => {
+    if (!viewportSize) {
+      return;
+    }
+
+    zoomAtPoint(
+      getViewportCenterPoint(viewportSize),
+      getLiveCamera().zoom + cameraZoomStep,
+    );
+    syncCamera();
+  }, [getLiveCamera, syncCamera, viewportSize, zoomAtPoint]);
+
+  const handleZoomOut = useCallback(() => {
+    if (!viewportSize) {
+      return;
+    }
+
+    zoomAtPoint(
+      getViewportCenterPoint(viewportSize),
+      getLiveCamera().zoom - cameraZoomStep,
+    );
+    syncCamera();
+  }, [getLiveCamera, syncCamera, viewportSize, zoomAtPoint]);
+
+  const canZoomIn = camera.zoom < cameraZoomLimits.max - 0.001;
+  const canZoomOut = camera.zoom > cameraZoomLimits.min + 0.001;
+  const canFitAllTiles = tiles.length > 0 && viewportSize !== null;
+
   const { keyboardActionsRef } = useCanvasKeyboardShortcuts({
     selectedTileIdsRef,
   });
 
   keyboardActionsRef.current = {
+    canFitAllTiles,
     canRedoLayout,
     canUndoLayout,
     clearCanvas,
@@ -367,6 +428,7 @@ export function useAppCanvas() {
     handleCopyTiles,
     handleDeleteTiles,
     handlePasteTiles,
+    handleFitAllTiles,
     handleRedoLayout,
     handleUndoLayout,
     saveCanvasNow,
@@ -544,15 +606,20 @@ export function useAppCanvas() {
     areVideoDetailsHidden,
     bounds,
     camera,
+    canFitAllTiles,
     canRedoLayout,
     canSave,
     canUndoLayout,
+    canZoomIn,
+    canZoomOut,
     clearCanvas,
     contextMenuState,
     closeContextMenu,
     errorMessage,
     handleCanvasExport,
     handleCanvasImport,
+    handleFitAllTiles,
+    handleFocusVideoTile,
     handleClearPlaylistCache,
     handleClearSavedLayout,
     handleContextMenuPaste,
@@ -562,6 +629,8 @@ export function useAppCanvas() {
     handlePlaylistLoad,
     handleRedoLayout,
     handleUndoLayout,
+    handleZoomIn,
+    handleZoomOut,
     isPlaylistPickerOpen,
     isShortcutLegendVisible,
     isSlowPlaylistLoad,

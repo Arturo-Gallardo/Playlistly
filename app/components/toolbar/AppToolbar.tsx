@@ -13,8 +13,11 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import type { PlaylistLoadStatus } from "../../hooks/playlist/usePlaylistVideos";
 import { useYouTubePlaylists } from "../../hooks/playlist/useYouTubePlaylists";
+import { CanvasZoomControls } from "../canvas/CanvasZoomControls";
 import { AccountMenu } from "../auth/AccountMenu";
+import type { CanvasTile } from "../../lib/canvas/canvas-layout";
 import { PlaylistInput } from "./PlaylistInput";
+import { ToolbarVideoSearch } from "./ToolbarVideoSearch";
 import { PlaylistPicker } from "./PlaylistPicker";
 import { ToolbarPanButton } from "./ToolbarPanButton";
 import { ToolbarPressButton } from "./ToolbarPressButton";
@@ -23,9 +26,12 @@ import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
 const toolbarIconClassName = "size-4";
 
 type AppToolbarProps = {
+  canFitAllTiles: boolean;
   canRedo: boolean;
   canSave: boolean;
   canUndo: boolean;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
   errorMessage: string | null;
   hasTilesOnCanvas: boolean;
   onCanvasClear: () => void;
@@ -34,16 +40,24 @@ type AppToolbarProps = {
   onCanvasRedo: () => void;
   onCanvasSave: () => void;
   onCanvasUndo: () => void;
+  onFitAllTiles: () => void;
+  onFocusVideoTile: (tileId: string) => void;
   onPlaylistLoad: (playlist: string) => Promise<void>;
   onPickerOpenChange: (isOpen: boolean) => void;
   onSettingsOpen: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
   playlistStatus: PlaylistLoadStatus;
+  tiles: CanvasTile[];
 };
 
 export function AppToolbar({
+  canFitAllTiles,
   canRedo,
   canSave,
   canUndo,
+  canZoomIn,
+  canZoomOut,
   errorMessage,
   hasTilesOnCanvas,
   onCanvasClear,
@@ -52,10 +66,15 @@ export function AppToolbar({
   onCanvasRedo,
   onCanvasSave,
   onCanvasUndo,
+  onFitAllTiles,
+  onFocusVideoTile,
   onPlaylistLoad,
   onPickerOpenChange,
   onSettingsOpen,
+  onZoomIn,
+  onZoomOut,
   playlistStatus,
+  tiles,
 }: AppToolbarProps) {
   const { data: session, status: authStatus } = useSession();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -228,7 +247,20 @@ export function AppToolbar({
         />
       </div>
 
-      <div className="pointer-events-auto flex justify-end gap-2">
+      <div className="group pointer-events-auto -m-3 flex min-w-0 items-center justify-end gap-2 p-3">
+        <ToolbarVideoSearch
+          disabled={!hasTilesOnCanvas}
+          onFocusTile={onFocusVideoTile}
+          tiles={tiles}
+        />
+        <CanvasZoomControls
+          canFitAll={canFitAllTiles}
+          canZoomIn={canZoomIn}
+          canZoomOut={canZoomOut}
+          onFitAll={onFitAllTiles}
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+        />
         {isSignedIn ? (
           <AccountMenu
             email={session.user?.email ?? null}
@@ -263,3 +295,5 @@ export function AppToolbar({
     </header>
   );
 }
+
+

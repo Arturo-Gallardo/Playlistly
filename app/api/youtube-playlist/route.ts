@@ -1,26 +1,32 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitExceededResponse } from "../../lib/api/rate-limit-response";
+import { enforcePlaylistFetchLimit } from "../../lib/api/youtube-rate-limit";
 import {
   fetchYouTubePlaylistVideos,
+  parsePlaylistQuery,
   YouTubePlaylistError,
 } from "../../lib/youtube/youtube-playlist";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const playlist = searchParams.get("playlist");
+  const parsed = parsePlaylistQuery(searchParams.get("playlist") ?? "");
 
-  if (!playlist) {
-    return NextResponse.json(
-      { error: "Add a playlist query parameter." },
-      { status: 400 },
-    );
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const token = await getToken({ req: request });
+  const rateLimit = enforcePlaylistFetchLimit(request, token?.sub);
+
+  if (!rateLimit.allowed) {
+    return rateLimitExceededResponse(rateLimit);
   }
 
   try {
     // signed-in users get oauth access, public users fall back to the api key
-    const token = await getToken({ req: request });
     const videos = await fetchYouTubePlaylistVideos(
-      playlist,
+      parsed.playlistId,
       token?.googleAccessToken,
     );
     return NextResponse.json({ videos });
