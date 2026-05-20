@@ -6,12 +6,16 @@ import { cn } from "../lib/cn";
 
 type CanvasContextMenuProps = {
   canCopy: boolean;
+  canDelete: boolean;
   canPaste: boolean;
+  canSaveToPlaylist: boolean;
   clientX: number;
   clientY: number;
   onClose: () => void;
   onCopy: () => void;
+  onDelete: () => void;
   onPaste: () => void;
+  onSaveToPlaylist: () => void;
 };
 
 type MenuPosition = {
@@ -24,12 +28,16 @@ const menuItemClassName =
 
 export function CanvasContextMenu({
   canCopy,
+  canDelete,
   canPaste,
+  canSaveToPlaylist,
   clientX,
   clientY,
   onClose,
   onCopy,
+  onDelete,
   onPaste,
+  onSaveToPlaylist,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -152,6 +160,30 @@ export function CanvasContextMenu({
         type="button"
       >
         <span>Paste</span>
+      </button>
+      <button
+        className={cn(menuItemClassName, !canDelete && "text-white/30")}
+        disabled={!canDelete}
+        onClick={() => {
+          onDelete();
+          onClose();
+        }}
+        role="menuitem"
+        type="button"
+      >
+        <span>Delete</span>
+      </button>
+      <button
+        className={cn(menuItemClassName, !canSaveToPlaylist && "text-white/30")}
+        disabled={!canSaveToPlaylist}
+        onClick={() => {
+          onSaveToPlaylist();
+          onClose();
+        }}
+        role="menuitem"
+        type="button"
+      >
+        <span>Save to YouTube</span>
       </button>
     </div>,
     document.body,

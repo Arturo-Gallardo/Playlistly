@@ -119,9 +119,9 @@ body {
 .toolbar-pan-button {
   appearance: none;
   background: transparent;
-  border: 1px solid rgb(255 255 255 / 20%);
+  border: 1px solid rgb(255 255 255 / 30%);
   border-radius: 9999px;
-  color: rgb(255 255 255 / 30%);
+  color: rgb(255 255 255 / 48%);
   cursor: pointer;
   display: grid;
   font-family: var(--font-saira), Arial, sans-serif;
@@ -129,7 +129,7 @@ body {
   font-weight: 600;
   height: 2.25rem;
   line-height: 1;
-  opacity: 0.45;
+  opacity: 0.62;
   padding: 0;
   place-items: center;
   transform: scale(0.9);
@@ -137,12 +137,16 @@ body {
     background-color 300ms ease-out,
     border-color 300ms ease-out,
     color 300ms ease-out,
-    opacity 300ms ease-out,
     transform 300ms ease-out;
   width: 2.25rem;
 }
 
-.group:hover .toolbar-pan-button {
+.toolbar-pan-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.group:hover .toolbar-pan-button:not(:disabled) {
   border-color: rgb(255 255 255 / 45%);
   color: rgb(255 255 255 / 80%);
   opacity: 1;
@@ -155,11 +159,11 @@ body {
   color: white;
 }
 
-.playlist-picker-button {
+.toolbar-pan-button-glow {
   position: relative;
 }
 
-.playlist-picker-button::after {
+.toolbar-pan-button-glow::after {
   background: #ca3e47;
   border-radius: 9999px;
   content: "";
@@ -173,8 +177,39 @@ body {
   z-index: -1;
 }
 
+.toolbar-pan-button-held {
+  background: #ca3e47;
+  border-color: #ca3e47;
+  color: white;
+  opacity: 1;
+  transform: scale(0.92) rotate(-4deg);
+  transition:
+    background-color 90ms ease-out,
+    border-color 90ms ease-out,
+    color 90ms ease-out,
+    opacity 90ms ease-out,
+    transform 90ms ease-out;
+}
+
+.toolbar-pan-button-held::after {
+  opacity: 0.16;
+  transform: scale(0.88);
+}
+
+.toolbar-pan-button-release {
+  animation: toolbar-pan-button-pop 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: #ca3e47;
+  border-color: #ca3e47;
+  color: white;
+  opacity: 1;
+}
+
+.toolbar-pan-button-release::after {
+  opacity: 0.22;
+  transform: scale(1);
+}
+
 .playlist-picker-button-active {
-  animation: playlist-button-pop 420ms cubic-bezier(0.16, 1, 0.3, 1);
   background: #ca3e47;
   border-color: #ca3e47;
   color: white;
@@ -216,6 +251,109 @@ body {
   background: #ca3e47;
 }
 
+.save-playlist-video-list {
+  scrollbar-color: rgb(202 62 71 / 70%) transparent;
+  scrollbar-width: thin;
+}
+
+.canvas-app-enter {
+  animation: canvas-app-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.canvas-toolbar-enter {
+  animation: canvas-toolbar-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.05s;
+}
+
+@keyframes canvas-toolbar-enter {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.canvas-empty-state-enter {
+  animation: canvas-empty-state-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.canvas-empty-state-enter-delayed {
+  animation: canvas-empty-state-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.14s;
+}
+
+.canvas-tile-enter {
+  animation: canvas-tile-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes canvas-app-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes canvas-empty-state-enter {
+  from {
+    opacity: 0;
+    scale: 0.97;
+    translate: 0 10px;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes canvas-tile-enter {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.canvas-onboarding-hint {
+  animation: canvas-onboarding-hint-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.canvas-onboarding-hint:nth-of-type(2) {
+  animation-delay: 0.12s;
+}
+
+@keyframes canvas-onboarding-hint-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.save-playlist-drag-handle {
+  touch-action: none;
+}
+
+.save-playlist-drag-handle:hover {
+  color: rgb(255 255 255 / 75%);
+}
+
 .playlist-loading-card {
   animation: playlist-loading-pulse 1.2s ease-in-out infinite;
   background: linear-gradient(
@@ -231,9 +369,9 @@ body {
   animation: playlist-loaded-toast 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes playlist-button-pop {
+@keyframes toolbar-pan-button-pop {
   0% {
-    transform: scale(0.9) rotate(0deg);
+    transform: scale(0.92) rotate(-4deg);
   }
 
   55% {
@@ -241,7 +379,7 @@ body {
   }
 
   100% {
-    transform: scale(1) rotate(-8deg);
+    transform: scale(1) rotate(0deg);
   }
 }
 
@@ -327,6 +465,22 @@ body {
   color: white;
 }
 
+.toolbar-button.toolbar-action-held,
+.toolbar-icon-button.toolbar-action-held {
+  border-color: rgb(202 62 71 / 65%);
+  color: rgb(255 255 255 / 95%);
+  transform: scale(0.97);
+  transition:
+    border-color 90ms ease-out,
+    color 90ms ease-out,
+    transform 90ms ease-out;
+}
+
+.toolbar-button.toolbar-action-release,
+.toolbar-icon-button.toolbar-action-release {
+  animation: toolbar-action-release 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .toolbar-icon-button {
   align-items: center;
   appearance: none;
@@ -349,6 +503,24 @@ body {
 .toolbar-icon-button:hover {
   border-color: #ca3e47;
   color: white;
+}
+
+@keyframes toolbar-action-release {
+  0% {
+    border-color: rgb(202 62 71 / 65%);
+    color: rgb(255 255 255 / 95%);
+    transform: scale(0.97);
+  }
+
+  55% {
+    border-color: rgb(202 62 71 / 80%);
+    color: white;
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .toolbar-tooltip-wrap {

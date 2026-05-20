@@ -11,14 +11,16 @@ export function CanvasEmptyState() {
       className="pointer-events-none fixed inset-0 z-[5] grid place-items-center px-6"
       aria-live="polite"
     >
-      <p className="font-control max-w-md text-center text-sm font-semibold leading-6 text-white/80">
-        Load a playlist to see it here!
+      <div className="canvas-empty-state-enter max-w-md text-center">
+        <p className="font-control text-base font-semibold leading-7 text-white/80 sm:text-lg sm:leading-8">
+          Load a playlist to see it here!
+        </p>
         {!isSignedIn ? (
-          <span className="mt-2 block text-xs font-medium uppercase tracking-[0.2em] text-white/45">
+          <p className="canvas-empty-state-enter-delayed font-control mt-2 text-xs font-medium uppercase tracking-[0.2em] text-white/45">
             Or log in to load one of yours
-          </span>
+          </p>
         ) : null}
-      </p>
+      </div>
     </div>
   );
 }

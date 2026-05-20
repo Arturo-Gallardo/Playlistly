@@ -13,7 +13,9 @@ import {
 import { useCanvasCamera } from "../hooks/useCanvasCamera";
 import { useCanvasPersistence } from "../hooks/useCanvasPersistence";
 import { useCanvasTiles } from "../hooks/useCanvasTiles";
+import { useCanvasTileEnter } from "../hooks/useCanvasTileEnter";
 import { usePlaylistVideos } from "../hooks/usePlaylistVideos";
+import { useYouTubePlaylists } from "../hooks/useYouTubePlaylists";
 import {
   applyTileSnap,
   buildGrabOffsets,
@@ -30,7 +32,9 @@ import {
   getNextSelectedTileIds,
   resolveMarqueeSelection,
 } from "../lib/canvas-selection";
+import { getVideosFromSelectedTiles } from "../lib/playlist-export";
 import { playlistSourcesInclude } from "../lib/playlist-source";
+import type { PlaylistVideo } from "../types/playlist";
 import {
   buildPastedTileEntries,
   buildPastedTileEntriesAtWorldPoint,
@@ -44,10 +48,12 @@ import {
 import { AppToolbar } from "./AppToolbar";
 import { CanvasContextMenu } from "./CanvasContextMenu";
 import { CanvasEmptyState } from "./CanvasEmptyState";
+import { CanvasOnboardingHints } from "./CanvasOnboardingHints";
 import {
   CanvasShortcutLegend,
   type CanvasInteraction,
 } from "./CanvasShortcutLegend";
+import { SavePlaylistDialog } from "./SavePlaylistDialog";
 import { SelectionBox } from "./SelectionBox";
 import { type HoveredVideoDetails, VideoGrid } from "./VideoGrid";
 
@@ -171,6 +177,16 @@ export function AppCanvas() {
   const contextMenuStateRef = useRef(contextMenuState);
   contextMenuStateRef.current = contextMenuState;
   const [clipboardRevision, setClipboardRevision] = useState(0);
+  const [savePlaylistDialogVideos, setSavePlaylistDialogVideos] = useState<
+    PlaylistVideo[] | null
+  >(null);
+  const [isPlaylistPickerOpen, setIsPlaylistPickerOpen] = useState(false);
+  const {
+    errorMessage: playlistsErrorMessage,
+    loadPlaylists,
+    playlists,
+    status: playlistsStatus,
+  } = useYouTubePlaylists();
   const [selectedTileIds, setSelectedTileIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -191,7 +207,6 @@ export function AppCanvas() {
     payload: TileClipboardPayload;
   } | null>(null);
   const selectedTileIdsRef = useRef(selectedTileIds);
-  selectedTileIdsRef.current = selectedTileIds;
 
   const keyboardActionsRef = useRef<{
     canRedo: boolean;
@@ -263,6 +278,7 @@ export function AppCanvas() {
     },
     onPlaylistSourcesRestore: syncPlaylistSources,
   });
+  const isTileEnterActive = useCanvasTileEnter(tiles.length, playlistStatus);
 
   const tilesLayoutKey = useMemo(
     () =>
@@ -272,24 +288,24 @@ export function AppCanvas() {
     [tiles],
   );
 
-  useEffect(() => {
-    setSelectedTileIds((currentSelection) => {
-      if (currentSelection.size === 0) {
-        return currentSelection;
-      }
+  const validSelectedTileIds = useMemo(() => {
+    if (selectedTileIds.size === 0) {
+      return selectedTileIds;
+    }
 
-      const existingTileIds = new Set(tiles.map((tile) => tile.id));
-      const nextSelection = new Set(
-        [...currentSelection].filter((tileId) => existingTileIds.has(tileId)),
-      );
+    const existingTileIds = new Set(tiles.map((tile) => tile.id));
+    const nextSelection = new Set(
+      [...selectedTileIds].filter((tileId) => existingTileIds.has(tileId)),
+    );
 
-      if (nextSelection.size === currentSelection.size) {
-        return currentSelection;
-      }
+    if (nextSelection.size === selectedTileIds.size) {
+      return selectedTileIds;
+    }
 
-      return nextSelection;
-    });
-  }, [tiles]);
+    return nextSelection;
+  }, [selectedTileIds, tiles]);
+
+  selectedTileIdsRef.current = validSelectedTileIds;
 
   const {
     canRedoClear,
@@ -381,12 +397,12 @@ export function AppCanvas() {
   }, [playlistSources.length, syncPlaylistSources, tiles.length]);
 
   const handleDeleteTiles = useCallback(() => {
-    if (selectedTileIds.size === 0) {
+    if (validSelectedTileIds.size === 0) {
       return false;
     }
 
     beginTileDragCheckpoint();
-    const removedCount = removeTilesByIds(selectedTileIds);
+    const removedCount = removeTilesByIds(validSelectedTileIds);
 
     if (removedCount === 0) {
       cancelTileDragCheckpoint();
@@ -408,7 +424,7 @@ export function AppCanvas() {
     commitTileDragCheckpoint,
     removeTilesByIds,
     saveCanvasSilently,
-    selectedTileIds,
+    validSelectedTileIds,
     showNotification,
   ]);
 
@@ -448,7 +464,9 @@ export function AppCanvas() {
   }, []);
 
   const handleCopyTiles = useCallback(() => {
-    const selectedTiles = tiles.filter((tile) => selectedTileIds.has(tile.id));
+    const selectedTiles = tiles.filter((tile) =>
+      validSelectedTileIds.has(tile.id),
+    );
     const payload = buildTileClipboardPayload(selectedTiles);
 
     if (!payload) {
@@ -466,7 +484,7 @@ export function AppCanvas() {
     }
 
     return true;
-  }, [selectedTileIds, tiles]);
+  }, [validSelectedTileIds, tiles]);
 
   const performPaste = useCallback(
     async ({
@@ -565,16 +583,42 @@ export function AppCanvas() {
   );
 
   const handlePasteTiles = useCallback(async () => {
-    if (selectedTileIds.size > 0) {
-      return performPaste({ replaceTileIds: [...selectedTileIds] });
+    if (validSelectedTileIds.size > 0) {
+      return performPaste({ replaceTileIds: [...validSelectedTileIds] });
     }
 
     return performPaste({});
-  }, [performPaste, selectedTileIds]);
+  }, [performPaste, validSelectedTileIds]);
 
   const closeContextMenu = useCallback(() => {
     setContextMenuState(null);
   }, []);
+
+  const handleSaveToPlaylistFromMenu = useCallback(() => {
+    const menuState = contextMenuStateRef.current;
+
+    if (!menuState || menuState.replaceTileIds.length === 0) {
+      return;
+    }
+
+    const selectedIds = new Set(menuState.replaceTileIds);
+    const videos = getVideosFromSelectedTiles(tiles, selectedIds);
+
+    if (videos.length === 0) {
+      return;
+    }
+
+    setSavePlaylistDialogVideos(videos);
+    closeContextMenu();
+  }, [closeContextMenu, tiles]);
+
+  const handlePlaylistSaved = useCallback(
+    (message: string, playlistUrl: string) => {
+      showNotification(message);
+      window.open(playlistUrl, "_blank", "noreferrer");
+    },
+    [showNotification],
+  );
 
   const handleContextMenuPaste = useCallback(async () => {
     const menuState = contextMenuStateRef.current;
@@ -673,7 +717,7 @@ export function AppCanvas() {
         viewportSize,
       }),
     });
-  }, [camera, getLiveCamera, movedTileIds, tiles, viewportSize]);
+  }, [getLiveCamera, movedTileIds, tiles, viewportSize]);
 
   useLayoutEffect(() => {
     const viewportElement = viewportRef.current;
@@ -1205,7 +1249,7 @@ export function AppCanvas() {
   }
 
   return (
-    <main className="relative h-dvh overflow-hidden bg-[#111111] text-white">
+    <main className="canvas-app-enter relative h-dvh overflow-hidden bg-[#111111] text-white">
       <AppToolbar
         areVideoDetailsHidden={areVideoDetailsHidden}
         errorMessage={errorMessage}
@@ -1218,6 +1262,7 @@ export function AppCanvas() {
         onCanvasSave={saveCanvasNow}
         onCanvasUndo={handleUndoLayout}
         onPlaylistLoad={handlePlaylistLoad}
+        onPickerOpenChange={setIsPlaylistPickerOpen}
         onVideoDetailsToggle={() =>
           setAreVideoDetailsHidden((currentValue) => !currentValue)
         }
@@ -1225,11 +1270,17 @@ export function AppCanvas() {
       />
 
       {tiles.length === 0 && playlistStatus !== "loading" ? (
-        <CanvasEmptyState />
+        <>
+          <CanvasEmptyState />
+          <CanvasOnboardingHints
+            isPlaylistPickerOpen={isPlaylistPickerOpen}
+            isVisible
+          />
+        </>
       ) : null}
 
       <div
-        className={`absolute inset-0 touch-none select-none bg-[radial-gradient(circle,_rgba(255,255,255,0.16)_1px,_transparent_1px)] [background-size:20px_20px] ${
+        className={`absolute inset-0 z-0 touch-none select-none bg-[radial-gradient(circle,_rgba(255,255,255,0.16)_1px,_transparent_1px)] [background-size:20px_20px] ${
           dragMode?.type === "pan" ? "cursor-grabbing" : "cursor-crosshair"
         }`}
         onContextMenu={handleViewportContextMenu}
@@ -1259,13 +1310,14 @@ export function AppCanvas() {
           <VideoGrid
             bounds={bounds}
             cameraZoom={camera.zoom}
+            isTileEnterActive={isTileEnterActive}
             movingTileIds={movingTileIds}
             onTileDoubleClick={handleTileDoubleClick}
             onVideoHover={setHoveredVideoDetails}
             onVideoHoverEnd={() => setHoveredVideoDetails(null)}
             onTileContextMenu={handleTileContextMenu}
             onTilePointerDown={handleTilePointerDown}
-            selectedTileIds={selectedTileIds}
+            selectedTileIds={validSelectedTileIds}
             visibleTiles={visibleTiles}
           />
           {selectionRect ? <SelectionBox rect={selectionRect} /> : null}
@@ -1327,14 +1379,30 @@ export function AppCanvas() {
       {contextMenuState ? (
         <CanvasContextMenu
           canCopy={contextMenuState.replaceTileIds.length > 0}
+          canDelete={contextMenuState.replaceTileIds.length > 0}
           canPaste={menuCanPaste}
+          canSaveToPlaylist={contextMenuState.replaceTileIds.length > 0}
           clientX={contextMenuState.clientX}
           clientY={contextMenuState.clientY}
           onClose={closeContextMenu}
           onCopy={handleCopyTiles}
+          onDelete={handleDeleteTiles}
           onPaste={() => {
             void handleContextMenuPaste();
           }}
+          onSaveToPlaylist={handleSaveToPlaylistFromMenu}
+        />
+      ) : null}
+
+      {savePlaylistDialogVideos ? (
+        <SavePlaylistDialog
+          initialVideos={savePlaylistDialogVideos}
+          onClose={() => setSavePlaylistDialogVideos(null)}
+          onLoadPlaylists={loadPlaylists}
+          onSaved={handlePlaylistSaved}
+          playlists={playlists}
+          playlistsErrorMessage={playlistsErrorMessage}
+          playlistsStatus={playlistsStatus}
         />
       ) : null}
 

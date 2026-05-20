@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import type { PlaylistLoadStatus } from "../hooks/usePlaylistVideos";
+import { ToolbarPressButton } from "./ToolbarPressButton";
 import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
 
 type PlaylistInputProps = {
@@ -51,7 +52,7 @@ export function PlaylistInput({
         />
       </div>
 
-      <div className="min-w-0">
+      <div className="min-w-0" data-onboarding-target="playlist-input">
         <label className="sr-only" htmlFor="playlist-url">
           youtube playlist link
         </label>
@@ -76,21 +77,21 @@ export function PlaylistInput({
       </div>
 
       <ToolbarTooltipWrap label="Load playlist">
-        <button className="toolbar-button" disabled={isLoading} type="submit">
+        <ToolbarPressButton disabled={isLoading} type="submit" variant="pill">
           {isLoading ? "loading" : "load"}
-        </button>
+        </ToolbarPressButton>
       </ToolbarTooltipWrap>
       <ToolbarTooltipWrap
         label={areVideoDetailsHidden ? "Show details" : "Hide details"}
       >
-        <button
+        <ToolbarPressButton
           aria-pressed={!areVideoDetailsHidden}
-          className={`toolbar-button ${areVideoDetailsHidden ? "" : "toolbar-button-active"}`}
+          className={areVideoDetailsHidden ? undefined : "toolbar-button-active"}
           onClick={onVideoDetailsToggle}
-          type="button"
+          variant="pill"
         >
           details
-        </button>
+        </ToolbarPressButton>
       </ToolbarTooltipWrap>
     </form>
   );

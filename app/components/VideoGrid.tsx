@@ -4,6 +4,7 @@ import type {
   Rect,
   VisibleCanvasTile,
 } from "../lib/canvas-layout";
+import { cn } from "../lib/cn";
 import type { PlaylistVideo } from "../types/playlist";
 import { VideoCard, type ThumbnailSize } from "./VideoCard";
 
@@ -15,6 +16,7 @@ export type HoveredVideoDetails = {
 type VideoGridProps = {
   bounds: Rect;
   cameraZoom: number;
+  isTileEnterActive: boolean;
   movingTileIds: Set<string>;
   onTileDoubleClick: (
     tile: CanvasTile,
@@ -37,6 +39,7 @@ type VideoGridProps = {
 export function VideoGrid({
   bounds,
   cameraZoom,
+  isTileEnterActive,
   movingTileIds,
   onTileDoubleClick,
   onVideoHover,
@@ -58,9 +61,15 @@ export function VideoGrid({
     >
       {visibleTiles.map((tile) => (
         <div
-          className="absolute"
+          className={cn(
+            "absolute",
+            isTileEnterActive && "canvas-tile-enter",
+          )}
           key={tile.id}
           style={{
+            animationDelay: isTileEnterActive
+              ? `${Math.min(tile.index, 48) * 16}ms`
+              : undefined,
             height: tile.height,
             left: tile.x,
             top: tile.y,

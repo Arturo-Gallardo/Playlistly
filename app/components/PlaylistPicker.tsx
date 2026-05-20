@@ -26,7 +26,7 @@ export function PlaylistPicker({
   }
 
   return (
-    <div className="playlist-picker-panel pointer-events-auto absolute left-1/2 top-16 z-20 w-80 rounded-md border border-white/20 bg-[#111111]/95 p-3 shadow-2xl backdrop-blur">
+    <div className="playlist-picker-panel pointer-events-auto absolute left-1/2 top-16 z-30 w-80 rounded-md border border-white/20 bg-[#111111]/95 p-3 shadow-2xl backdrop-blur">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-control text-xs font-semibold uppercase tracking-[0.24em] text-white/70">
           your playlists

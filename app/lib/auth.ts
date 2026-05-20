@@ -1,11 +1,11 @@
 import type { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-const youtubeReadonlyScope = [
+const youtubeScope = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/youtube.readonly",
+  "https://www.googleapis.com/auth/youtube",
 ].join(" ");
 
 export const authOptions: AuthOptions = {
@@ -20,7 +20,7 @@ export const authOptions: AuthOptions = {
         params: {
           access_type: "offline",
           prompt: "consent",
-          scope: youtubeReadonlyScope,
+          scope: youtubeScope,
         },
       },
     }),

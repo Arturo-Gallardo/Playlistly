@@ -1,11 +1,15 @@
 import "server-only";
 
-import type { PlaylistVideoWire, YouTubePlaylist } from "../types/playlist";
+import type {
+  PlaylistVideoWire,
+  YouTubePlaylist,
+  YouTubePlaylistPrivacyStatus,
+} from "../types/playlist";
 
 const YOUTUBE_PLAYLIST_ITEMS_URL =
   "https://www.googleapis.com/youtube/v3/playlistItems";
 const YOUTUBE_PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists";
-const DEFAULT_PLAYLIST_LIMIT = 4000;
+export const MAX_PLAYLIST_VIDEOS = 5000;
 const DEFAULT_USER_PLAYLIST_LIMIT = 200;
 
 type YouTubeThumbnail = {
@@ -118,7 +122,7 @@ export async function fetchYouTubePlaylistVideos(
   let nextPageToken: string | undefined;
 
   // youtube only returns 50 items at a time, so larger playlists need paging
-  while (videos.length < DEFAULT_PLAYLIST_LIMIT) {
+  while (videos.length < MAX_PLAYLIST_VIDEOS) {
     const page = await fetchPlaylistPage({
       credential,
       playlistId,
@@ -136,7 +140,112 @@ export async function fetchYouTubePlaylistVideos(
     nextPageToken = page.nextPageToken;
   }
 
-  return videos.slice(0, DEFAULT_PLAYLIST_LIMIT);
+  return videos.slice(0, MAX_PLAYLIST_VIDEOS);
+}
+
+export function getYouTubePlaylistUrl(playlistId: string) {
+  return `https://www.youtube.com/playlist?list=${playlistId}`;
+}
+
+export async function createYouTubePlaylist(
+  accessToken: string,
+  {
+    title,
+    description,
+    privacyStatus = "unlisted",
+  }: {
+    title: string;
+    description?: string;
+    privacyStatus?: YouTubePlaylistPrivacyStatus;
+  },
+) {
+  const response = await fetch(`${YOUTUBE_PLAYLISTS_URL}?part=snippet,status`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      snippet: {
+        title,
+        description: description ?? "",
+      },
+      status: {
+        privacyStatus,
+      },
+    }),
+    cache: "no-store",
+  });
+
+  const data = (await response.json()) as {
+    id?: string;
+    error?: { message?: string };
+  };
+
+  if (!response.ok || !data.id) {
+    throw new YouTubePlaylistError(
+      data.error?.message ?? "YouTube rejected the new playlist request.",
+    );
+  }
+
+  return data.id;
+}
+
+export async function appendVideosToYouTubePlaylist(
+  accessToken: string,
+  {
+    playlistId,
+    videoIds,
+  }: {
+    playlistId: string;
+    videoIds: string[];
+  },
+) {
+  const uniqueVideoIds = dedupeVideoIds(videoIds);
+
+  if (uniqueVideoIds.length === 0) {
+    throw new YouTubePlaylistError("Add at least one video to save.");
+  }
+
+  if (uniqueVideoIds.length > MAX_PLAYLIST_VIDEOS) {
+    throw new YouTubePlaylistError(
+      `You can save up to ${MAX_PLAYLIST_VIDEOS} videos at once.`,
+    );
+  }
+
+  for (const videoId of uniqueVideoIds) {
+    const response = await fetch(
+      `${YOUTUBE_PLAYLIST_ITEMS_URL}?part=snippet`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          snippet: {
+            playlistId,
+            resourceId: {
+              kind: "youtube#video",
+              videoId,
+            },
+          },
+        }),
+        cache: "no-store",
+      },
+    );
+
+    const data = (await response.json()) as {
+      error?: { message?: string };
+    };
+
+    if (!response.ok) {
+      throw new YouTubePlaylistError(
+        data.error?.message ??
+          `YouTube rejected a video (${videoId}) for this playlist.`,
+      );
+    }
+  }
 }
 
 export async function fetchYouTubeUserPlaylists(accessToken: string) {
@@ -290,6 +399,24 @@ function isYouTubePlaylist(
   playlist: YouTubePlaylist | null,
 ): playlist is YouTubePlaylist {
   return playlist !== null;
+}
+
+function dedupeVideoIds(videoIds: string[]) {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const videoId of videoIds) {
+    const trimmedId = videoId.trim();
+
+    if (!trimmedId || seen.has(trimmedId)) {
+      continue;
+    }
+
+    seen.add(trimmedId);
+    unique.push(trimmedId);
+  }
+
+  return unique;
 }
 
 function getPreviewThumbnailUrl(thumbnails: YouTubeThumbnails | undefined) {
