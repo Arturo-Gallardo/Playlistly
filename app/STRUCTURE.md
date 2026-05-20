@@ -5,7 +5,7 @@ app/
   components/
     auth/          Account, session provider
     canvas/        Grid, viewport, context menu, shortcuts
-      overlays/    Toasts, loading
+      overlays/    Toasts, loading, welcome
       viewport/    Pan/zoom surface + video detail panel
     shared/        Cross-feature UI (keyboard chord display)
     toolbar/       Header, playlist input, pan buttons, settings dialog

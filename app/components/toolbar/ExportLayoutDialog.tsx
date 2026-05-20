@@ -86,16 +86,16 @@ export function ExportLayoutDialog({
               export layout
             </h2>
             <p className="text-[11px] text-white/50">
-              choose a filename for your canvas layout.
+              Pick a name and we&apos;ll save your grid as a file.
             </p>
           </header>
 
           <div className="space-y-2">
             <label
-              className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45"
+              className="text-[11px] font-semibold text-white/45"
               htmlFor={filenameInputId}
             >
-              filename
+              File name
             </label>
             <div className="flex min-w-0 items-center gap-2">
               <input
@@ -111,6 +111,14 @@ export function ExportLayoutDialog({
                 {canvasLayoutFileExtension}
               </span>
             </div>
+          </div>
+
+          <div className="export-layout-note space-y-1">
+            <p className="text-[11px] text-[#CA3E47]">Want to share it?</p>
+            <p className="text-[11px] leading-relaxed text-white/55">
+              Send the file to a friend — they can hit Import in Playlistly and
+              your grid shows up exactly how you left it.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

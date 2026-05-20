@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useWelcomeOverlay } from "../../hooks/canvas/useWelcomeOverlay";
 import { useAppCanvas } from "../../hooks/canvas/useAppCanvas";
 import { AppToolbar } from "../toolbar/AppToolbar";
 import { ExportLayoutDialog } from "../toolbar/ExportLayoutDialog";
@@ -9,6 +10,7 @@ import { CanvasEmptyState } from "./CanvasEmptyState";
 import { CanvasOnboardingHints } from "./CanvasOnboardingHints";
 import { CanvasShortcutLegend } from "./CanvasShortcutLegend";
 import { CanvasOverlays } from "./overlays/CanvasOverlays";
+import { WelcomeOverlay } from "./overlays/WelcomeOverlay";
 import { CanvasVideoDetailsPanel } from "./viewport/CanvasVideoDetailsPanel";
 import { CanvasViewport } from "./viewport/CanvasViewport";
 import type { HoveredVideoDetails } from "./VideoGrid";
@@ -21,6 +23,7 @@ export function AppCanvas() {
 
   const canvas = useAppCanvas();
   const { pointer } = canvas;
+  const welcome = useWelcomeOverlay();
 
   return (
     <main className="canvas-app-enter relative h-dvh overflow-hidden bg-[#111111] text-white">
@@ -45,10 +48,12 @@ export function AppCanvas() {
       {canvas.tiles.length === 0 && canvas.playlistStatus !== "loading" ? (
         <>
           <CanvasEmptyState />
-          <CanvasOnboardingHints
-            isPlaylistPickerOpen={canvas.isPlaylistPickerOpen}
-            isVisible
-          />
+          {!welcome.isWelcomeVisible ? (
+            <CanvasOnboardingHints
+              isPlaylistPickerOpen={canvas.isPlaylistPickerOpen}
+              isVisible
+            />
+          ) : null}
         </>
       ) : null}
 
@@ -104,6 +109,10 @@ export function AppCanvas() {
           onShortcutLegendVisibleChange={canvas.setIsShortcutLegendVisible}
           onVideoDetailsHiddenChange={canvas.setAreVideoDetailsHidden}
         />
+      ) : null}
+
+      {welcome.isWelcomeVisible ? (
+        <WelcomeOverlay onContinue={welcome.dismissWelcome} />
       ) : null}
 
       <CanvasOverlays
