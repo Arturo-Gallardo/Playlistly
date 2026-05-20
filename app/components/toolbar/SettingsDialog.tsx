@@ -50,7 +50,7 @@ export function SettingsDialog({
     <>
       <button
         aria-label="close settings"
-        className="fixed inset-0 z-[110] cursor-default bg-black/55"
+        className="settings-dialog-backdrop-enter fixed inset-0 z-[110] cursor-default bg-black/55"
         onClick={onClose}
         type="button"
       />
@@ -58,7 +58,7 @@ export function SettingsDialog({
         <div
           aria-labelledby={dialogTitleId}
           aria-modal="true"
-          className="settings-dialog pointer-events-auto font-control flex w-full max-w-md flex-col gap-5 rounded-xl border border-white/15 bg-[#111111]/95 p-4 shadow-[0_18px_48px_rgb(0_0_0/0.55)] backdrop-blur-md sm:p-5"
+          className="settings-dialog-enter pointer-events-auto font-control flex w-full max-w-md flex-col gap-5 rounded-xl border border-white/15 bg-[#111111]/95 p-4 shadow-[0_18px_48px_rgb(0_0_0/0.55)] backdrop-blur-md sm:p-5"
           onPointerDown={(event) => event.stopPropagation()}
           role="dialog"
         >

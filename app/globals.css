@@ -341,6 +341,38 @@ body {
   }
 }
 
+.settings-dialog-backdrop-enter {
+  animation: settings-dialog-backdrop-enter 220ms ease-out both;
+}
+
+.settings-dialog-enter {
+  animation: settings-dialog-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes settings-dialog-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes settings-dialog-enter {
+  from {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 10px;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
 .playlist-loading-card {
   animation: playlist-loading-pulse 1.2s ease-in-out infinite;
   background: linear-gradient(

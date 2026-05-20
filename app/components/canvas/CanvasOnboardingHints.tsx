@@ -32,15 +32,15 @@ export function CanvasOnboardingHints({
   }
 
   const pickerLabel = isSignedIn
-    ? "or pick one of your playlists with P"
-    : "log in to browse your playlists with P";
+    ? "or pick one of your playlists with the list button"
+    : "log in to browse your playlists";
 
   return createPortal(
     <>
       {placements.playlistInput ? (
         <OnboardingHint
           bend="left"
-          label="paste a youtube playlist link, then hit load"
+          label="paste a youtube playlist link, then hit the search button"
           placement={placements.playlistInput}
         />
       ) : null}

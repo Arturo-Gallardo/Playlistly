@@ -1,10 +1,13 @@
 "use client";
 
+import { Download, Loader2, Search, Upload } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { PlaylistLoadStatus } from "../../hooks/playlist/usePlaylistVideos";
 import { canvasLayoutFileExtension } from "../../lib/canvas/canvas-import-export";
 import { ToolbarPressButton } from "./ToolbarPressButton";
 import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
+
+const toolbarIconClassName = "size-4";
 
 type PlaylistInputProps = {
   errorMessage: string | null;
@@ -94,22 +97,52 @@ export function PlaylistInput({
       </div>
 
       <ToolbarTooltipWrap label="Load playlist">
-        <ToolbarPressButton disabled={isLoading} type="submit" variant="pill">
-          {isLoading ? "loading" : "load"}
+        <ToolbarPressButton
+          aria-label="load playlist"
+          disabled={isLoading}
+          type="submit"
+          variant="icon"
+        >
+          {isLoading ? (
+            <Loader2
+              aria-hidden="true"
+              className={`${toolbarIconClassName} animate-spin`}
+              strokeWidth={1.8}
+            />
+          ) : (
+            <Search
+              aria-hidden="true"
+              className={toolbarIconClassName}
+              strokeWidth={1.8}
+            />
+          )}
         </ToolbarPressButton>
       </ToolbarTooltipWrap>
       <ToolbarTooltipWrap label="Export layout">
         <ToolbarPressButton
+          aria-label="export layout"
           disabled={!hasTilesOnCanvas}
           onClick={onCanvasExport}
-          variant="pill"
+          variant="icon"
         >
-          export
+          <Upload
+            aria-hidden="true"
+            className={toolbarIconClassName}
+            strokeWidth={1.8}
+          />
         </ToolbarPressButton>
       </ToolbarTooltipWrap>
       <ToolbarTooltipWrap label="Import layout">
-        <ToolbarPressButton onClick={handleImportClick} variant="pill">
-          import
+        <ToolbarPressButton
+          aria-label="import layout"
+          onClick={handleImportClick}
+          variant="icon"
+        >
+          <Download
+            aria-hidden="true"
+            className={toolbarIconClassName}
+            strokeWidth={1.8}
+          />
         </ToolbarPressButton>
       </ToolbarTooltipWrap>
       <input

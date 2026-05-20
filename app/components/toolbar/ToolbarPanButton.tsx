@@ -1,12 +1,13 @@
 "use client";
 
 import { useToolbarPressFeedback } from "../../hooks/toolbar/useToolbarPressFeedback";
+import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 type ToolbarPanButtonProps = {
   active?: boolean;
   ariaLabel: string;
-  children: string;
+  children: ReactNode;
   className?: string;
   dataOnboardingTarget?: string;
   disabled?: boolean;

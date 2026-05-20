@@ -1,6 +1,14 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import {
+  ListMusic,
+  Redo2,
+  Save,
+  Settings,
+  Trash2,
+  Undo2,
+  User,
+} from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import type { PlaylistLoadStatus } from "../../hooks/playlist/usePlaylistVideos";
@@ -11,6 +19,8 @@ import { PlaylistPicker } from "./PlaylistPicker";
 import { ToolbarPanButton } from "./ToolbarPanButton";
 import { ToolbarPressButton } from "./ToolbarPressButton";
 import { ToolbarTooltipWrap } from "./ToolbarTooltipWrap";
+
+const toolbarIconClassName = "size-4";
 
 type AppToolbarProps = {
   canRedo: boolean;
@@ -144,7 +154,11 @@ export function AppToolbar({
               dataOnboardingTarget="playlist-picker"
               onClick={() => void handlePickerToggle()}
             >
-              P
+              <ListMusic
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
             </ToolbarPanButton>
           </ToolbarTooltipWrap>
           <ToolbarTooltipWrap
@@ -157,7 +171,11 @@ export function AppToolbar({
               disabled={!canSave}
               onClick={onCanvasSave}
             >
-              S
+              <Save
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
             </ToolbarPanButton>
           </ToolbarTooltipWrap>
           <ToolbarTooltipWrap hint="Ctrl+K" label="Clear layout">
@@ -165,7 +183,11 @@ export function AppToolbar({
               ariaLabel="clear saved canvas layout"
               onClick={onCanvasClear}
             >
-              C
+              <Trash2
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
             </ToolbarPanButton>
           </ToolbarTooltipWrap>
           <ToolbarTooltipWrap hint="Ctrl+Z" label="Undo">
@@ -174,7 +196,11 @@ export function AppToolbar({
               disabled={!canUndo}
               onClick={onCanvasUndo}
             >
-              U
+              <Undo2
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
             </ToolbarPanButton>
           </ToolbarTooltipWrap>
           <ToolbarTooltipWrap hint="Ctrl+Y" label="Redo">
@@ -183,7 +209,11 @@ export function AppToolbar({
               disabled={!canRedo}
               onClick={onCanvasRedo}
             >
-              R
+              <Redo2
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
             </ToolbarPanButton>
           </ToolbarTooltipWrap>
         </nav>
@@ -207,13 +237,17 @@ export function AppToolbar({
           />
         ) : (
           <ToolbarTooltipWrap label="Log in with Google">
-            <button
-              className="toolbar-button"
+            <ToolbarPressButton
+              aria-label="log in with google"
               onClick={() => void signIn("google")}
-              type="button"
+              variant="icon"
             >
-              login
-            </button>
+              <User
+                aria-hidden="true"
+                className={toolbarIconClassName}
+                strokeWidth={1.8}
+              />
+            </ToolbarPressButton>
           </ToolbarTooltipWrap>
         )}
         <ToolbarTooltipWrap label="Settings">
